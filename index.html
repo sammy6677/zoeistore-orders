@@ -1,0 +1,1185 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>ZoeiStore Orders</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: app shell — left rail of sections on desktop, bottom tab bar on phones.
+   Dashboard = wine "money" hero + pipeline + two small charts + biggest orders + to-do list.
+   Orders = photo cards with filters. Pricing = one table to set selling prices. Settings. Order details open in a side drawer. */
+:root{
+  --bg:#F5F3F4; --surface:#FFFFFF; --sunk:#EEEAEC; --ink:#1D181B; --muted:#6F6469; --line:#E2DADE;
+  --accent:#7A1F3D; --accent-2:#9E2D52; --accent-ink:#FFFFFF; --accent-soft:#F6E6EC;
+  --hero-1:#5C1730; --hero-2:#8E2A4C;
+  --good:#1E7A4C; --good-soft:#DFF2E7; --warn:#9A5B00; --warn-soft:#FCEDD5; --bad:#B42335; --bad-soft:#FBE2E5;
+  --move:#2A5FA8; --move-soft:#E1EBF8;
+  --sea:#2a78d6; --air:#eb6834;
+  --shadow:0 1px 2px rgba(60,20,35,.06),0 4px 14px rgba(60,20,35,.06);
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Figtree","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#141113; --surface:#1F1A1D; --sunk:#29222616; --sunk:#2A2327; --ink:#F2ECEF; --muted:#A8999F; --line:#3A3136;
+  --accent:#E07A9B; --accent-2:#EC98B3; --accent-ink:#1A0C12; --accent-soft:#3A2029;
+  --hero-1:#4A1427; --hero-2:#6E2240;
+  --good:#5CC991; --good-soft:#163426; --warn:#E8AE5A; --warn-soft:#3A2A12; --bad:#F07884; --bad-soft:#3E1A1F;
+  --move:#7FB0EC; --move-soft:#172840;
+  --sea:#3987e5; --air:#d95926;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#141113; --surface:#1F1A1D; --sunk:#2A2327; --ink:#F2ECEF; --muted:#A8999F; --line:#3A3136;
+  --accent:#E07A9B; --accent-2:#EC98B3; --accent-ink:#1A0C12; --accent-soft:#3A2029;
+  --hero-1:#4A1427; --hero-2:#6E2240;
+  --good:#5CC991; --good-soft:#163426; --warn:#E8AE5A; --warn-soft:#3A2A12; --bad:#F07884; --bad-soft:#3E1A1F;
+  --move:#7FB0EC; --move-soft:#172840;
+  --sea:#3987e5; --air:#d95926;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25); color-scheme:dark }
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--f-mono);font-size:.85em}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance}
+
+/* shell */
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+.rail{position:sticky;top:0;height:100vh;padding:22px 14px;display:flex;flex-direction:column;gap:6px;border-right:1px solid var(--line);background:var(--surface);padding-left:max(14px,env(safe-area-inset-left,0px))}
+.logo{display:flex;align-items:center;gap:10px;padding:4px 8px 18px}
+.logo .mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(140deg,var(--hero-1),var(--hero-2));color:#fff;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:1.05rem}
+.logo b{font-family:var(--f-display);font-size:1.08rem;font-weight:800;letter-spacing:-.01em;display:block;line-height:1.1}
+.logo span{font-size:.72rem;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.nav{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;color:var(--muted);font-weight:600;cursor:pointer;border:0;background:transparent;text-align:left;width:100%}
+.nav svg{width:20px;height:20px;flex:none}
+.nav:hover{background:var(--sunk);color:var(--ink)}
+.nav[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
+.nav .count{margin-left:auto;font-size:.75rem;background:var(--sunk);border-radius:99px;padding:1px 8px;color:var(--muted)}
+.rail .foot{margin-top:auto;font-size:.78rem;color:var(--muted);padding:0 10px}
+.content{min-width:0;padding-block:24px 60px;padding-left:max(28px,env(safe-area-inset-left,0px));padding-right:max(28px,env(safe-area-inset-right,0px))}
+.page{max-width:1160px;margin:0 auto;display:grid;gap:20px}
+.phead{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.phead h1{margin:0;font-size:1.75rem;font-weight:800;letter-spacing:-.02em}
+.phead p{margin:2px 0 0;color:var(--muted)}
+.phead .grow{flex:1;min-width:200px}
+.tabbar{display:none}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 15px;cursor:pointer;font-weight:600;font-size:.88rem;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent-2)}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.sm{padding:5px 11px;font-size:.8rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);min-width:0}
+.pad{padding:18px 20px}
+.ctitle{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px}
+.ctitle h2{margin:0;font-size:1.02rem;font-weight:700}
+.ctitle span{font-size:.8rem;color:var(--muted)}
+.lab{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.hint{font-size:.82rem;color:var(--muted)}
+
+/* dashboard */
+.hero{border-radius:18px;padding:24px 26px;color:#fff;background:radial-gradient(120% 140% at 100% 0%,var(--hero-2) 0%,var(--hero-1) 60%);display:grid;grid-template-columns:1.3fr 1fr;gap:20px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-60px;bottom:-60px;width:220px;height:220px;border-radius:50%;border:28px solid rgba(255,255,255,.06)}
+.hero .lab{color:rgba(255,255,255,.75)}
+.hero .big{font-family:var(--f-display);font-weight:800;font-size:2.7rem;letter-spacing:-.02em;line-height:1.05;margin-top:6px}
+.hero .sub{color:rgba(255,255,255,.82);margin-top:6px;font-size:.92rem}
+.hero .side{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start;position:relative;z-index:1}
+.hero .mini{background:rgba(255,255,255,.1);border-radius:12px;padding:11px 13px}
+.hero .mini b{display:block;font-size:1.2rem;font-weight:700;margin-top:2px}
+.hero .cta{grid-column:1/-1;background:#fff;color:#5C1730;border:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.kpi{padding:16px 18px;display:grid;gap:4px;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.kpi:hover{border-color:var(--muted)}
+.kpi b{font-family:var(--f-display);font-size:1.55rem;font-weight:700;line-height:1.1}
+.kpi .s{font-size:.82rem;color:var(--muted)}
+.kpi .ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;margin-bottom:6px}
+.kpi .ico svg{width:17px;height:17px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.three{display:grid;grid-template-columns:1.25fr 1fr;gap:14px}
+.pipe{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.stage{border-radius:12px;padding:12px;background:var(--sunk);display:grid;gap:4px;cursor:pointer;border:1px solid transparent;text-align:left;font:inherit;color:inherit}
+.stage:hover{border-color:var(--line)}
+.stage b{font-family:var(--f-display);font-size:1.5rem;line-height:1}
+.stage small{font-size:.76rem;color:var(--muted)}
+.stage .t{font-size:.8rem;font-weight:700;display:flex;align-items:center;gap:6px}
+.stage .t i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.stage.on{background:var(--surface);border-color:var(--line);box-shadow:var(--shadow)}
+.hbars{display:grid;gap:12px}
+.hrow{display:grid;grid-template-columns:96px minmax(0,1fr) auto;align-items:center;gap:10px;font-size:.88rem}
+.hrow .track{height:12px;background:var(--sunk);border-radius:4px;position:relative}
+.hrow .fill{position:absolute;inset:0 auto 0 0;border-radius:0 4px 4px 0;background:var(--accent)}
+.hrow .v{font-weight:600}
+.split{display:flex;height:14px;border-radius:4px;overflow:hidden;gap:2px;background:var(--surface)}
+.split span{display:block;height:100%}
+.split span:first-child{border-radius:4px 0 0 4px}.split span:last-child{border-radius:0 4px 4px 0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.84rem;margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.list{display:grid}
+.lrow{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--line);cursor:pointer;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;font:inherit;color:inherit;width:100%}
+.lrow:first-child{border-top:0}
+.lrow:hover .nm{color:var(--accent)}
+.thumb{width:44px;height:44px;border-radius:10px;object-fit:contain;background:#fff;border:1px solid var(--line)}
+.thumb.no{background:var(--sunk)}
+.nm{font-weight:600;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta{font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.minibar{height:5px;border-radius:3px;background:var(--sunk);margin-top:5px;overflow:hidden}
+.minibar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.todo .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:.85rem}
+.todo .lrow{grid-template-columns:30px minmax(0,1fr) auto}
+
+/* chips */
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.st-not{background:var(--warn-soft);color:var(--warn)}
+.st-shipped,.st-received{background:var(--good-soft);color:var(--good)}
+.st-moving{background:var(--move-soft);color:var(--move)}
+.m-sea::before,.m-air::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:0}
+.m-sea::before{background:var(--sea)} .m-air::before{background:var(--air)}
+.m-none{background:transparent;border:1px dashed var(--line)}
+
+/* orders */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.seg{display:inline-flex;background:var(--sunk);border-radius:999px;padding:3px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;border-radius:999px;padding:6px 13px;cursor:pointer;font-size:.84rem;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.seg .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:0}
+.seg .cnt{font-size:.75rem;opacity:.7;margin-left:2px}
+.seg.status{overflow-x:auto;flex-wrap:nowrap;max-width:100%}
+.seg.status button{white-space:nowrap}
+.search{flex:1;min-width:180px;max-width:320px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 15px}
+.ogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.ocard{overflow:hidden;cursor:pointer;display:flex;flex-direction:column;text-align:left;padding:0;width:100%;font:inherit;color:inherit;transition:transform .12s ease,box-shadow .12s ease}
+.ocard:hover{transform:translateY(-2px)}
+.ocard .ph{aspect-ratio:1/1;background:#fff;display:grid;place-items:center;position:relative;border-bottom:1px solid var(--line)}
+.ocard .ph img{width:100%;height:100%;object-fit:contain;padding:10px}
+.ocard .ph .no{color:var(--muted);font-size:.85rem}
+.ocard .nb{position:absolute;top:10px;left:10px;background:var(--ink);color:var(--bg);border-radius:7px;padding:2px 8px;font-family:var(--f-mono);font-size:.76rem}
+.ocard .stc{position:absolute;top:10px;right:10px}
+.ocard .body{padding:13px 15px 15px;display:grid;gap:10px}
+.ocard h3{margin:0;font-size:.98rem;font-weight:700;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}
+.ostats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--sunk);border-radius:10px;padding:8px 10px}
+.ostats span{display:block;font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+.ostats b{font-size:.86rem;font-weight:700}
+.addcard{border:1.5px dashed var(--line);background:transparent;border-radius:var(--r);min-height:260px;display:grid;place-items:center;color:var(--muted);font-weight:700;cursor:pointer}
+.addcard:hover{color:var(--accent);border-color:var(--accent)}
+.empty{border:1px dashed var(--line);border-radius:var(--r);padding:30px;text-align:center;color:var(--muted);background:var(--surface)}
+
+/* pricing table */
+.tablewrap{overflow-x:auto}
+table.pt{width:100%;border-collapse:collapse;min-width:820px;font-size:.88rem}
+.pt th{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;font-weight:700;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.pt td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.pt tr:last-child td{border-bottom:0}
+.pt .r{text-align:right}
+.pt .pname{display:flex;gap:10px;align-items:center;min-width:220px;cursor:pointer}
+.pt .pname div{min-width:0}
+.pt input{width:110px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 9px;text-align:right}
+.pt input:focus{border-color:var(--accent);outline:none}
+.pt tfoot td{font-weight:700;background:var(--sunk)}
+.pt tfoot tr.sum td{padding:8px 8px;border-top:1px solid var(--line)}
+.pt tfoot td.r{white-space:nowrap}
+.pt tfoot tr.sum td .hint{font-weight:500}
+.pt tfoot tr.grand td{font-size:1rem;background:var(--accent-soft)}
+.tag{font-size:.72rem;font-weight:700;color:var(--muted)}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(20,8,14,.42);z-index:40}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(720px,100%);background:var(--bg);z-index:41;display:flex;flex-direction:column;box-shadow:-10px 0 30px rgba(0,0,0,.2)}
+.dhead{display:flex;align-items:center;gap:10px;padding:12px max(16px,env(safe-area-inset-right,0px)) 12px 20px;padding-top:calc(12px + env(safe-area-inset-top,0px));background:var(--surface);border-bottom:1px solid var(--line)}
+.dhead h2{margin:0;font-size:1.1rem;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dbody{overflow-y:auto;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(40px + env(safe-area-inset-bottom,0px)) 20px;display:grid;gap:16px}
+.sect{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:12px;min-width:0}
+.sect h4{margin:0;font-size:.74rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.prow{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.pimg{width:140px;height:140px;border-radius:12px;background:#fff;border:1px solid var(--line);object-fit:contain;padding:6px;flex:none}
+.pimg.no{display:grid;place-items:center;color:var(--muted);font-size:.8rem;background:var(--sunk)}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;flex:1;min-width:0}
+.field{display:grid;gap:4px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label{font-size:.78rem;font-weight:600;color:var(--muted)}
+.field input,.field select{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:8px 10px;min-width:0}
+.field input:focus,.field select:focus{border-color:var(--accent);outline:none}
+.calc{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.calc div{background:var(--sunk);border-radius:10px;padding:10px}
+.calc span{display:block;font-size:.68rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.calc b{font-size:1rem;font-weight:700}
+table.vars{width:100%;border-collapse:collapse;min-width:640px;font-size:.86rem}
+table.vars th{font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;font-weight:700;padding:6px 4px;border-bottom:1px solid var(--line)}
+table.vars td{padding:5px 4px;border-bottom:1px solid var(--line)}
+table.vars input{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:6px 7px;min-width:0}
+table.vars .r{text-align:right}
+table.vars tfoot td{font-weight:700;border-bottom:0;padding-top:9px}
+.x{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:4px 7px;border-radius:7px}
+.x:hover{color:var(--bad);background:var(--bad-soft)}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--bad-soft);color:var(--bad);border-radius:10px;padding:10px 12px;font-weight:600;font-size:.88rem}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:.86rem;z-index:60}
+.settings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.tip{position:fixed;z-index:70;background:var(--ink);color:var(--bg);font-size:.8rem;padding:6px 9px;border-radius:8px;pointer-events:none;white-space:nowrap}
+
+.lock{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));background:radial-gradient(120% 120% at 100% 0%,var(--hero-2) 0%,var(--hero-1) 65%);color:#fff}
+.lock[hidden],[hidden]{display:none!important}
+.lockbox{width:min(360px,100%);display:grid;gap:16px;justify-items:center;text-align:center}
+.lockbox .mark{width:60px;height:60px;border-radius:16px;background:rgba(255,255,255,.14);display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:1.7rem}
+.lockbox h1{margin:0;font-size:1.6rem;font-weight:800;letter-spacing:-.01em}
+.lockbox p{margin:0;opacity:.82;font-size:.92rem}
+.pin{width:100%;font-family:var(--f-mono);font-size:1.6rem;letter-spacing:.5em;text-align:center;padding:12px 10px 12px calc(10px + .5em);border-radius:12px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.1);color:#fff}
+.pin::placeholder{color:rgba(255,255,255,.4)}
+.pin:focus{outline:none;border-color:#fff;background:rgba(255,255,255,.16)}
+.lockbox .btn{width:100%;background:#fff;color:#5C1730;border:0;padding:12px;font-size:1rem}
+.lockerr{min-height:1.3em;font-weight:600;color:#FFD2DC;font-size:.9rem}
+.shake{animation:shake .32s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+body.locked .app,body.locked .tabbar,body.locked #drawerRoot,body.locked #saleRoot{display:none}
+.lockbtn{margin-top:8px}
+.jsum{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.jsum .card{padding:14px 16px;display:grid;gap:3px}
+.jsum b{font-family:var(--f-display);font-size:1.3rem;font-weight:700;line-height:1.15}
+.jsum .s{font-size:.78rem;color:var(--muted)}
+.verdict{display:flex;gap:14px;align-items:center;padding:16px 18px;border-radius:var(--r)}
+.verdict .vi{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:1.2rem;flex:none}
+.verdict b{font-family:var(--f-display);font-size:1.08rem}
+.verdict p{margin:2px 0 0;font-size:.88rem}
+.v-good{background:var(--good-soft);color:var(--good)} .v-good .vi{background:var(--good);color:var(--surface)}
+.v-thin{background:var(--warn-soft);color:var(--warn)} .v-thin .vi{background:var(--warn);color:var(--surface)}
+.v-bad{background:var(--bad-soft);color:var(--bad)} .v-bad .vi{background:var(--bad);color:var(--surface)}
+.v-none{background:var(--sunk);color:var(--muted)} .v-none .vi{background:var(--line);color:var(--ink)}
+.jadd{display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;align-items:start}
+.jadd .ph{width:120px;height:120px;border-radius:12px;border:1.5px dashed var(--line);display:grid;place-items:center;color:var(--muted);font-size:.8rem;cursor:pointer;background:var(--sunk);overflow:hidden;text-align:center;padding:6px}
+.jadd .ph img{width:100%;height:100%;object-fit:contain;background:#fff}
+.jform{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:10px 12px}
+.jform .acts{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.jprev{font-size:.88rem;font-weight:600}
+table.jt{width:100%;border-collapse:collapse;min-width:1120px;font-size:.88rem}
+.jt th{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;font-weight:700;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.jt td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.jt .r{text-align:right}
+.jt input{border:1px solid transparent;background:transparent;border-radius:8px;padding:7px 8px;width:100%;min-width:0}
+.jt input:hover{border-color:var(--line)}
+.jt input:focus{border-color:var(--accent);background:var(--surface);outline:none}
+.jt input.n{text-align:right;width:96px}
+.jt input.c{text-align:right;width:62px}
+.jt input.q{text-align:right;width:64px}
+.jt .pn{display:flex;gap:10px;align-items:center;min-width:240px}
+.jt .pn label{cursor:pointer;flex:none}
+.jt tfoot td{font-weight:700;background:var(--sunk);white-space:nowrap}
+.jt tr.grand td{background:var(--accent-soft);font-size:.98rem}
+.pill{display:inline-block;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap}
+.p-good{background:var(--good-soft);color:var(--good)} .p-thin{background:var(--warn-soft);color:var(--warn)} .p-bad{background:var(--bad-soft);color:var(--bad)}
+.stock{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.stock .card{padding:14px 16px;display:grid;gap:3px;border-top:4px solid var(--line)}
+.stock b{font-family:var(--f-display);font-size:1.45rem;font-weight:700;line-height:1.1}
+.stock .s{font-size:.78rem;color:var(--muted)}
+.stock .c-in{border-top-color:var(--move)} .stock .c-sold{border-top-color:var(--good)} .stock .c-left{border-top-color:var(--warn)} .stock .c-rev{border-top-color:var(--accent)}
+.jsub{align-self:start;justify-self:start}
+.jsub button{padding:8px 18px;font-size:.92rem}
+.jt th.instock,.jt td.instock{background:var(--good-soft)}
+.jt td.instock .stk{font-size:1.05rem}
+.jt th.grp,.jt td.grp{border-left:2px solid var(--line)}
+.sellbtn{background:var(--good);color:#fff;border-color:var(--good)}
+.sellbtn:hover{filter:brightness(1.08)}
+.sellbtn[disabled]{background:var(--sunk);color:var(--muted);border-color:var(--line);cursor:not-allowed}
+.stk{font-weight:700} .stk.low{color:var(--warn)} .stk.out{color:var(--bad)}
+.modal{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:rgba(20,8,14,.45)}
+.mbox{width:min(520px,100%);max-height:100%;overflow:auto;background:var(--surface);border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.3);display:grid;gap:16px;padding:20px}
+.mhead{display:flex;align-items:center;gap:10px}
+.mhead h2{margin:0;font-size:1.2rem;flex:1}
+.mprod{display:flex;gap:12px;align-items:center;background:var(--sunk);border-radius:12px;padding:10px}
+.mprod img,.mprod .no{width:56px;height:56px;border-radius:10px;object-fit:contain;background:#fff;border:1px solid var(--line);flex:none}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.qtyrow{display:flex;align-items:center;gap:8px}
+.qtyrow button{width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:1.3rem;font-weight:700;cursor:pointer;flex:none}
+.qtyrow input{text-align:center;font-size:1.1rem;font-weight:700}
+.receipt{background:var(--sunk);border-radius:12px;padding:12px 14px;display:grid;gap:6px;font-size:.9rem}
+.receipt div{display:flex;justify-content:space-between;gap:10px}
+.receipt .tot{border-top:1px dashed var(--line);padding-top:8px;font-weight:800;font-size:1rem}
+.merr{color:var(--bad);font-weight:600;font-size:.86rem;min-height:1.2em}
+.shist .lrow{grid-template-columns:44px minmax(0,1fr) auto auto;cursor:default}
+.saleamt{text-align:right}
+.saleamt b{display:block}
+.dsales{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.dsales .card{padding:16px 18px;display:grid;gap:4px}
+.dsales b{font-family:var(--f-display);font-size:1.5rem;font-weight:700;line-height:1.1}
+.dsales .s{font-size:.82rem;color:var(--muted)}
+.spark{display:flex;align-items:flex-end;gap:4px;height:90px;padding-top:6px}
+.spark .bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;min-width:0;height:100%}
+.spark .bar i{display:block;width:100%;max-width:26px;background:var(--accent);border-radius:4px 4px 0 0;min-height:2px}
+.spark .bar span{font-size:.62rem;color:var(--muted);white-space:nowrap}
+@media (max-width:1020px){ .stock,.dsales{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:520px){ .mgrid{grid-template-columns:1fr} .shist .lrow{grid-template-columns:40px minmax(0,1fr) auto} .shist .lrow .x,.shist .lrow .confirm{grid-column:2/-1;justify-self:end} }
+@media (max-width:1020px){ .jsum{grid-template-columns:repeat(2,minmax(0,1fr))} .jsum .card:last-child{grid-column:1/-1} .jform{grid-template-columns:1fr 1fr} .jform .wide{grid-column:1/-1} }
+@media (max-width:520px){ .jadd{grid-template-columns:1fr} .jadd .ph{width:100%;height:160px} }
+@media (max-width:1020px){ .kpis{grid-template-columns:repeat(2,minmax(0,1fr))} .three{grid-template-columns:1fr} }
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .rail{display:none}
+  .content{padding-block:16px calc(96px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:35;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+  .tabbar .nav{flex-direction:column;gap:3px;font-size:.72rem;padding:7px 4px;justify-content:center;text-align:center}
+  .tabbar .nav .count{display:none}
+  .hero{grid-template-columns:1fr;padding:20px}
+  .hero .big{font-size:2.2rem}
+  .two{grid-template-columns:1fr}
+  .pipe{grid-template-columns:repeat(5,minmax(110px,1fr));overflow-x:auto;padding-bottom:4px}
+  .settings{grid-template-columns:1fr}
+  .calc{grid-template-columns:1fr 1fr}
+}
+@media (max-width:520px){ .form{grid-template-columns:1fr} .pimg{width:100%;height:220px} .phead h1{font-size:1.45rem} .ogrid{grid-template-columns:1fr 1fr;gap:10px} .ocard .body{padding:10px} .ostats{grid-template-columns:1fr 1fr} .ostats div:last-child{display:none} .ocard h3{font-size:.88rem} }
+@media (prefers-reduced-motion:no-preference){ .drawer{animation:slide .18s ease-out} @keyframes slide{from{transform:translateX(24px);opacity:.6}to{transform:none;opacity:1}} }
+@media (prefers-reduced-motion:reduce){ .ocard{transition:none} .ocard:hover{transform:none} }
+</style>
+
+<div class="lock" id="lock" hidden>
+  <form class="lockbox" id="lockForm" autocomplete="off">
+    <div class="mark">Z</div>
+    <h1>ZoeiStore Orders</h1>
+    <p>Enter your 6-digit PIN to continue</p>
+    <input class="pin" id="pinIn" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••••" aria-label="PIN" autocomplete="off">
+    <div class="lockerr" id="lockErr" role="alert"></div>
+    <button class="btn" type="submit">Unlock</button>
+  </form>
+</div>
+<div class="app">
+  <aside class="rail" aria-label="Sections">
+    <div class="logo"><div class="mark">Z</div><div><b>ZoeiStore</b><span>Orders</span></div></div>
+    <nav id="railNav"></nav>
+    <div class="foot" id="railFoot">Alibaba → Kenya → Jumia<br><button class="btn sm lockbtn" type="button" data-lock>Lock</button></div>
+  </aside>
+  <div class="content"><div class="page" id="page"><div class="empty">Loading your orders…</div></div></div>
+</div>
+<nav class="tabbar" id="tabbar" aria-label="Sections"></nav>
+<div id="drawerRoot"></div>
+<div id="saleRoot"></div>
+<div class="toast" id="toast" hidden></div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const STATUSES=["Not shipped","Shipped","Arrived at agent","In transit to Kenya","Received"];
+const METHODS=["Sea","Air (flight)"];
+const ICONS={
+ dashboard:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>',
+ orders:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg>',
+ pricing:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>',
+ settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+ box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/></svg>',
+ ship:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20c2 1 4 1 6 0s4-1 6 0 4 1 6 0"/><path d="M4 17 3 12h18l-2 5"/><path d="M6 12V7h12v5M12 3v4"/></svg>',
+ clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+ piece:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>',
+ jumia:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l1 13H5z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>',
+ tag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/></svg>'
+};
+const TABS=[["dashboard","Dashboard"],["orders","Orders"],["pricing","Pricing"],["jumia","Jumia"],["settings","Settings"]];
+let db=null, assets=null, canWrite=true, loaded=false;
+let jSub="overview"; try{const v=localStorage.getItem("zs_jsub"); if(["overview","stock","sales"].includes(v)) jSub=v}catch{}
+let sales=new Map(), sale=null, sConfirm=null, salesShow=15;
+let jumia=new Map(), jAdd=false, jDraft={name:"",buy:"",sell:"",comm:18,fee:120,qty:""}, jConfirm=null;
+let orders=new Map(), settings={rate:130,commission:0.18,other:120};
+let tab=(location.hash||"").replace("#","")||"dashboard"; if(!TABS.some(t=>t[0]===tab)) tab="dashboard";
+let filt={ship:"all",agent:"all",q:""}, openId=null;
+try{ const t=localStorage.getItem("zs_tab"); if(!location.hash&&t&&TABS.some(x=>x[0]===t)) tab=t }catch{}
+
+/* ---------- maths ---------- */
+const n=v=>{const x=Number(v);return Number.isFinite(x)?x:0};
+const blank=v=>v===""||v==null;
+function calc(o){
+  const rate=n(settings.rate), usd=n(o.usd), ksh=usd*rate, fees=n(o.fees), total=ksh+fees;
+  const vars=o.variants||[]; const varPcs=vars.reduce((a,v)=>a+n(v.pieces),0);
+  const pieces=varPcs>0?varPcs:n(o.pieces);
+  const cpp=pieces>0?total/pieces:null;
+  const oComm=orderComm(o), commOf=v=>blank(v)?oComm:n(v)/100, oFee=orderFee(o), otherOf=v=>blank(v)?oFee:n(v);
+  let rev=0,prof=0,priced=0,commT=0;
+  const rows=vars.map(v=>{
+    const pcs=n(v.pieces), sell=blank(v.sell)?null:n(v.sell), comm=commOf(v.comm), other=otherOf(v.other);
+    let ppp=null,mgn=null,vr=null,vp=null;
+    if(sell!=null&&cpp!=null){ppp=sell*(1-comm)-other-cpp;mgn=sell>0?ppp/sell:null;vr=sell*pcs;vp=ppp*pcs;rev+=vr;prof+=vp;priced+=pcs;commT+=(sell*comm+other)*pcs}
+    return {pcs,sell,comm,other,ppp,mgn,vr,vp};
+  });
+  let oppp=null,omgn=null;
+  if(!varPcs&&!blank(o.sell)&&cpp!=null){const s=n(o.sell);oppp=s*(1-oComm)-oFee-cpp;omgn=s>0?oppp/s:null;rev=s*pieces;prof=oppp*pieces;priced=pieces;commT=(s*oComm+oFee)*pieces}
+  const breakeven=cpp!=null?(cpp+oFee)/(1-oComm):null;
+  return {usd,ksh,fees,total,pieces,cpp,rev,prof,priced,commT,rows,hasVars:varPcs>0,oppp,omgn,breakeven};
+}
+function orderComm(o){return blank(o.comm)?n(settings.commission):n(o.comm)/100}
+function orderFee(o){return blank(o.fee)?n(settings.other):n(o.fee)}
+
+/* ---------- one source of truth: Jumia products that come from an order follow that order ---------- */
+let jLoaded=false; const deletedOrders=new Set();
+function linkOf(id,p){
+  if(!p) return null;
+  let oid=p.oid; const legacy=oid===undefined||oid===null;
+  if(legacy){const m=/^order\s+(\d+)/i.exec(p.from||""); if(!m) return null;
+    const hit=[...orders.entries()].find(([,o])=>n(o.num)===+m[1]); if(!hit) return null; oid=hit[0]}
+  if(!oid) return null;
+  const o=orders.get(oid); if(!o) return {oid,orphan:true,legacy};
+  const hasV=calc(o).hasVars, vid=p.vid;
+  if(hasV){
+    let v=vid?(o.variants||[]).find(x=>x.id===vid):null;
+    if(!v&&!vid){const nm=(p.name||"").toLowerCase(); v=(o.variants||[]).find(x=>x.name&&nm.includes(String(x.name).toLowerCase()))}
+    return v?{oid,o,v}:{oid,o,orphan:true,legacy};
+  }
+  return vid?{oid,o,orphan:true,legacy}:{oid,o,v:null};
+}
+const isLinked=(id,p)=>{const L=linkOf(id,p);return !!(L&&!L.orphan)};
+function linkVals(L){
+  const o=L.o, c=calc(o), oc=orderComm(o), of=orderFee(o), buy=c.cpp==null?"":c.cpp;
+  if(L.v){const v=L.v;return {buy,qty:n(v.pieces),sell:blank(v.sell)?"":n(v.sell),comm:+((blank(v.comm)?oc:n(v.comm)/100)*100).toFixed(4),fee:blank(v.other)?of:n(v.other)}}
+  return {buy,qty:c.pieces,sell:blank(o.sell)?"":n(o.sell),comm:+(oc*100).toFixed(4),fee:of};
+}
+const SYNCK=["oid","vid","from","buy","qty","sell","comm","fee"];
+function syncSave(id){ if(!canWrite||!db) return; debounced("j"+id+"sync",()=>{const p=jumia.get(id); if(!p) return; const up={}; for(const k of SYNCK) if(k in p) up[k]=p[k]; write("jumia/"+id,r=>r.update(up))},700) }
+function syncLinked(){
+  if(!loaded||!jLoaded) return;
+  const have=new Set();
+  for(const [id,p] of [...jumia.entries()]){
+    const L=linkOf(id,p); if(!L) continue;
+    if(L.orphan){
+      // its order (or colour) was removed: drop it, or keep it as plain stock if it already has sales
+      if(L.legacy||!canWrite||(!L.o&&!deletedOrders.has(L.oid))) continue;
+      const s=soldOf(id);
+      if(s>0){Object.assign(p,{oid:"",vid:"",from:"",qty:s}); syncSave(id)} else {jumia.delete(id); write("jumia/"+id,r=>r.delete())}
+      continue;
+    }
+    const vid=L.v?L.v.id:""; have.add(L.oid+"|"+vid);
+    const val=linkVals(L); let ch=false;
+    if(p.oid!==L.oid){p.oid=L.oid;ch=true} if(p.vid!==vid){p.vid=vid;ch=true}
+    for(const k of ["buy","qty","sell","comm","fee"]){const a=p[k],b=val[k]; const same=(blank(a)&&blank(b))||(!blank(a)&&!blank(b)&&Math.abs(n(a)-n(b))<0.005); if(!same){p[k]=b;ch=true}}
+    if(ch) syncSave(id);
+  }
+  if(!canWrite||!db) return;
+  let num=Math.max(0,...[...jumia.values()].map(x=>n(x.num)));
+  for(const [oid,o] of sorted()){
+    const c=calc(o); if(!c.pieces) continue;
+    const list=c.hasVars?(o.variants||[]).filter(v=>n(v.pieces)>0):[null];
+    for(const v of list){
+      const key=oid+"|"+(v?v.id:""); if(have.has(key)) continue; have.add(key);
+      const ref=db.collection("jumia").doc();
+      const data={num:++num,name:(o.name||"Order #"+o.num)+(v?" – "+(v.name||"colour"):""),imageId:o.imageId||"",from:"order "+o.num,oid,vid:v?v.id:"",...linkVals({o,v})};
+      jumia.set(ref.id,data); write("jumia/"+ref.id,r=>r.set(data));
+    }
+  }
+}
+function localTotals(){
+  let inv=0,sales=0,comm=0,prof=0,pcs=0,priced=0,pricedPcs=0,count=0;
+  for(const [id,p] of jumia){ if(isLinked(id,p)) continue; count++; const c=jcalc(p); inv+=c.inv; pcs+=c.qty; if(!c.has) continue; priced++; pricedPcs+=c.qty; sales+=c.sales; comm+=c.commT; prof+=c.tp }
+  return {inv,sales,comm,prof,pcs,priced,pricedPcs,count};
+}
+/* the headline numbers every page shows: Alibaba orders + stock bought locally */
+function grand(){
+  const T=totals(), L=localTotals();
+  const inv=T.spent+L.inv, sales=T.rev+L.sales, comm=T.commT+L.comm, prof=T.prof+L.prof;
+  return {T,L,inv,sales,comm,prof,pcs:T.pcs+L.pcs,priced:T.priced+L.pricedPcs,mgn:sales?prof/sales:null,roi:inv?prof/inv:null};
+}
+const ksh=v=>v==null||!Number.isFinite(v)?"—":"KSh "+Math.round(v).toLocaleString("en-KE");
+const kshShort=v=>v==null?"—":Math.abs(v)>=1e6?"KSh "+(v/1e6).toFixed(1)+"M":Math.abs(v)>=1e4?"KSh "+(v/1e3).toFixed(0)+"k":ksh(v);
+const usd=v=>"$"+n(v).toLocaleString("en-US",{minimumFractionDigits:n(v)%1?2:0,maximumFractionDigits:2});
+const pct=v=>v==null?"—":(v*100).toFixed(0)+"%";
+const stClass=s=>!s||s==="Not shipped"?"st-not":s==="Shipped"?"st-shipped":s==="Received"?"st-received":"st-moving";
+const mClass=m=>m==="Sea"?"m-sea":m==="Air (flight)"?"m-air":"m-none";
+const isShipped=s=>s&&s!=="Not shipped";
+const sorted=()=>[...orders.entries()].sort((a,b)=>n(a[1].num)-n(b[1].num));
+const img=(o,cls)=>o.imageId?`<img class="${cls}" src="/_blob/${esc(o.imageId)}" alt="" loading="lazy">`:`<div class="${cls} no"></div>`;
+
+/* ---------- writes ---------- */
+const chains={}, timers={};
+function write(path,fn){
+  if(!db) return;
+  chains[path]=(chains[path]||Promise.resolve()).then(()=>fn(db.doc(path))).catch(e=>{
+    if(e&&e.code==="invalid_argument"){canWrite=false;toast("This view can't save changes.")}
+    else toast("Couldn't save. Check your connection and try again.");
+  });
+}
+function debounced(key,fn,ms=550){clearTimeout(timers[key]);timers[key]=setTimeout(()=>{delete timers[key];fn()},ms)}
+function setField(id,k,v,instant){
+  const o=orders.get(id); if(!o) return; o[k]=v;
+  const go=()=>write("orders/"+id,r=>r.update({[k]:orders.get(id)?.[k]??v}));
+  instant?go():debounced(id+k,go);
+}
+
+/* ---------- navigation ---------- */
+function renderNav(){
+  const html=TABS.map(([k,l])=>`<button class="nav" type="button" data-tab="${k}" ${tab===k?'aria-current="page"':""}>${ICONS[k]}<span>${l}</span>${k==="orders"&&loaded?`<span class="count">${orders.size}</span>`:""}</button>`).join("");
+  $("#railNav").innerHTML=html; $("#tabbar").innerHTML=html;
+}
+function go(t){ tab=t; try{localStorage.setItem("zs_tab",t)}catch{}; renderNav(); renderPage(); window.scrollTo({top:0}) }
+
+/* ---------- pages ---------- */
+function renderPage(){
+  if(!loaded) return;
+  syncLinked();
+  const p=$("#page");
+  const focusId=document.activeElement&&p.contains(document.activeElement)?document.activeElement.id:null;
+  if(tab==="dashboard") p.innerHTML=dashboard();
+  if(tab==="orders") p.innerHTML=ordersPage();
+  if(tab==="pricing") p.innerHTML=pricingPage();
+  if(tab==="settings") p.innerHTML=settingsPage();
+  if(tab==="jumia") p.innerHTML=jumiaPage();
+  if(focusId){const el=document.getElementById(focusId); if(el){el.focus(); if(el.setSelectionRange&&el.type!=="number"){const L=el.value.length;el.setSelectionRange(L,L)}}}
+}
+function totals(){
+  let spent=0,usdT=0,fees=0,pcs=0,prof=0,rev=0,priced=0,pricedOrders=0,commT=0,fixedFees=0;
+  const byAgent={},byMethod={"Sea":0,"Air (flight)":0},byStatus={}; STATUSES.forEach(s=>byStatus[s]={n:0,v:0});
+  for(const [,o] of orders){const c=calc(o);spent+=c.total;usdT+=c.usd;fees+=c.fees;pcs+=c.pieces;prof+=c.prof;rev+=c.rev;priced+=c.priced;commT+=c.commT;if(c.priced){pricedOrders++;fixedFees+=c.fees}
+    const a=o.agent||"No agent";byAgent[a]=(byAgent[a]||0)+c.total;
+    if(o.method) byMethod[o.method]=(byMethod[o.method]||0)+c.total; else byMethod["Not set"]=(byMethod["Not set"]||0)+c.total;
+    const s=STATUSES.includes(o.status)?o.status:"Not shipped"; byStatus[s].n++; byStatus[s].v+=c.total;}
+  return {spent,usdT,fees,pcs,prof,rev,priced,pricedOrders,commT,byAgent,byMethod,byStatus};
+}
+function dashboard(){
+  const G=grand(), T=G.T, L=G.L, count=orders.size;
+  const shipN=count-T.byStatus["Not shipped"].n;
+  const avg=G.pcs?G.inv/G.pcs:null;
+  const profitBlock=G.priced?`<div class="mini" style="grid-column:1/-1"><span class="lab">Expected profit</span><b class="num">${ksh(G.prof)}</b><span style="font-size:.8rem;opacity:.8">from ${G.priced} priced pieces · sales ${ksh(G.sales)}</span></div>`
+    :`<button class="btn cta" type="button" data-tab="pricing">Set selling prices to see profit →</button>`;
+  const stageColor={"Not shipped":"var(--warn)","Shipped":"var(--good)","Arrived at agent":"var(--move)","In transit to Kenya":"var(--move)","Received":"var(--good)"};
+  const pipe=STATUSES.map(s=>`<button class="stage ${T.byStatus[s].n?"on":""}" type="button" data-stage="${esc(s)}"><span class="t"><i style="background:${stageColor[s]}"></i>${s}</span><b class="num">${T.byStatus[s].n}</b><small class="num">${T.byStatus[s].n?kshShort(T.byStatus[s].v):"No orders"}</small></button>`).join("");
+  const agents=Object.entries(T.byAgent).sort((a,b)=>b[1]-a[1]); if(L.inv) agents.push(["Bought locally",L.inv]); const amax=Math.max(1,...agents.map(a=>a[1]));
+  const agentBars=agents.map(([a,v])=>`<div class="hrow"><span>${esc(a)}</span><div class="track" data-tip="${esc(a)}: ${ksh(v)} (${pct(v/G.inv)})"><div class="fill" style="width:${v/amax*100}%"></div></div><span class="v num">${kshShort(v)}</span></div>`).join("");
+  const sea=T.byMethod["Sea"]||0, air=T.byMethod["Air (flight)"]||0, unset=T.byMethod["Not set"]||0, tm=Math.max(1,sea+air+unset);
+  const methodCard=`<div class="split" role="img" aria-label="Sea ${ksh(sea)}, Air ${ksh(air)}">${sea?`<span data-tip="Sea: ${ksh(sea)}" style="width:${sea/tm*100}%;background:var(--sea)"></span>`:""}${air?`<span data-tip="Air: ${ksh(air)}" style="width:${air/tm*100}%;background:var(--air)"></span>`:""}${unset?`<span data-tip="Not set: ${ksh(unset)}" style="width:${unset/tm*100}%;background:var(--line)"></span>`:""}</div>
+    <div class="legend num"><span><i style="background:var(--sea)"></i>Sea · ${ksh(sea)} (${pct(sea/tm)})</span><span><i style="background:var(--air)"></i>Air · ${ksh(air)} (${pct(air/tm)})</span>${unset?`<span><i style="background:var(--line)"></i>Not set · ${ksh(unset)}</span>`:""}</div>`;
+  const big=sorted().map(([id,o])=>[id,o,calc(o)]).sort((a,b)=>b[2].total-a[2].total).slice(0,5); const bmax=Math.max(1,...big.map(b=>b[2].total));
+  const bigList=big.map(([id,o,c])=>`<button class="lrow" type="button" data-open="${esc(id)}">${img(o,"thumb")}<div style="min-width:0"><div class="nm">${esc(o.name||"Untitled")}</div><div class="meta">#${esc(o.num)} · ${esc(o.agent||"No agent")} · ${c.pieces||"?"} pcs</div><div class="minibar"><i style="width:${c.total/bmax*100}%"></i></div></div><b class="num">${kshShort(c.total)}</b></button>`).join("");
+  const todos=attention().slice(0,6);
+  const todoList=todos.length?todos.map(t=>`<button class="lrow" type="button" ${t.id?`data-open="${esc(t.id)}"`:`data-tab="${t.tab}"`}><span class="ic" style="background:${t.bg};color:${t.fg}">${t.icon}</span><div style="min-width:0"><div class="nm">${esc(t.title)}</div><div class="meta">${esc(t.sub)}</div></div><span class="hint">Open →</span></button>`).join("")
+    :`<p class="hint" style="margin:0">Nothing needs your attention. Nice.</p>`;
+  return `
+  <div class="phead"><div class="grow"><h1>Dashboard</h1><p>Your Alibaba orders at a glance</p></div><button class="btn primary" type="button" data-add>+ Add order</button></div>
+  <section class="hero">
+    <div style="position:relative;z-index:1"><div class="lab">Total invested</div><div class="big num">${ksh(G.inv)}</div>
+      <div class="sub num">${ksh(T.spent)} in ${count} Alibaba orders (${usd(T.usdT)}${T.fees?` + ${ksh(T.fees)} agent fees`:""})${L.count?` + ${ksh(L.inv)} stock bought locally (${L.count} products)`:""}</div>
+      <div class="sub num">${G.pcs.toLocaleString("en-KE")} pieces · ${ksh(avg)} average per piece · same totals as Pricing and Jumia</div></div>
+    <div class="side num">
+      <div class="mini"><span class="lab">Shipped</span><b>${shipN} / ${count}</b></div>
+      <div class="mini"><span class="lab">Exchange rate</span><b>KSh ${n(settings.rate)}</b></div>
+      ${profitBlock}
+    </div>
+  </section>
+  ${salesDash()}
+  <section class="kpis">
+    ${kpi("ship","var(--good-soft)","var(--good)","Shipped to agents",ksh(T.spent-T.byStatus["Not shipped"].v),`${shipN} orders`,"shipped")}
+    ${kpi("clock","var(--warn-soft)","var(--warn)","Waiting to ship",ksh(T.byStatus["Not shipped"].v),`${T.byStatus["Not shipped"].n} orders`,"not")}
+    ${kpi("piece","var(--move-soft)","var(--move)","Pieces coming",T.pcs.toLocaleString("en-KE"),`across ${count} orders`,"all")}
+    ${kpi("tag","var(--accent-soft)","var(--accent)","Priced for Jumia",`${T.pricedOrders+L.priced} / ${count+L.count}`,G.priced?`${ksh(G.prof)} expected profit`:"No selling prices yet","pricing")}
+  </section>
+  <section class="card pad"><div class="ctitle"><h2>Shipment pipeline</h2><span>Tap a stage to see its orders</span></div><div class="pipe">${pipe}</div></section>
+  <section class="two">
+    <div class="card pad"><div class="ctitle"><h2>Money by agent</h2><span>adds up to ${kshShort(G.inv)}</span></div><div class="hbars">${agentBars}</div></div>
+    <div class="card pad"><div class="ctitle"><h2>Sea vs air</h2><span>share of money</span></div>${methodCard}
+      <p class="hint" style="margin:12px 0 0">Sea is cheaper per kg but slower. Air suits small, urgent items.</p></div>
+  </section>
+  <section class="three">
+    <div class="card pad"><div class="ctitle"><h2>Biggest orders</h2><button class="btn ghost sm" type="button" data-tab="orders">See all →</button></div><div class="list">${bigList}</div></div>
+    <div class="card pad todo"><div class="ctitle"><h2>Needs attention</h2><span>${todos.length?attention().length+" items":""}</span></div><div class="list">${todoList}</div></div>
+  </section>`;
+}
+function kpi(icon,bg,fg,label,value,sub,act){
+  return `<button class="card kpi" type="button" data-kpi="${act}"><span class="ico" style="background:${bg};color:${fg}">${ICONS[icon]}</span><span class="lab">${label}</span><b class="num">${value}</b><span class="s num">${sub}</span></button>`;
+}
+function attention(){
+  const out=[]; const seen={};
+  for(const [id,o] of sorted()){
+    const c=calc(o);
+    if(o.tracking){ if(seen[o.tracking]) out.push({id,title:`#${o.num} has the same tracking as #${seen[o.tracking]}`,sub:o.tracking,icon:"!",bg:"var(--bad-soft)",fg:"var(--bad)"}); else seen[o.tracking]=o.num }
+    if(isShipped(o.status)&&!o.tracking) out.push({id,title:`#${o.num} shipped but no tracking number`,sub:o.name||"",icon:"#",bg:"var(--warn-soft)",fg:"var(--warn)"});
+    if(!c.pieces) out.push({id,title:`#${o.num} has no pieces entered`,sub:o.name||"",icon:"0",bg:"var(--warn-soft)",fg:"var(--warn)"});
+    if(c.prof<0&&c.priced) out.push({id,title:`#${o.num} is priced at a loss`,sub:`${ksh(c.prof)} expected`,icon:"−",bg:"var(--bad-soft)",fg:"var(--bad)"});
+  }
+  const unpriced=[...orders.values()].filter(o=>!calc(o).priced).length;
+  if(unpriced) out.push({tab:"pricing",title:`${unpriced} orders have no selling price`,sub:"Set prices in Pricing to see your profit",icon:"%",bg:"var(--accent-soft)",fg:"var(--accent)"});
+  const nofees=[...orders.values()].filter(o=>isShipped(o.status)&&blank(o.fees)).length;
+  if(nofees) out.push({tab:"orders",title:`${nofees} shipped orders without agent fees`,sub:"Add your agents' charges when they bill you",icon:"+",bg:"var(--move-soft)",fg:"var(--move)"});
+  return out;
+}
+function ordersPage(){
+  const q=filt.q.trim().toLowerCase();
+  const agents=[...new Set([...orders.values()].map(o=>o.agent).filter(Boolean))].sort();
+  if(filt.agent!=="all"&&!agents.includes(filt.agent)) filt.agent="all";
+  const list=sorted().filter(([,o])=>{
+    const st=o.status||"Not shipped";
+    if(filt.ship==="shipped"&&!isShipped(st)) return false;
+    if(filt.ship==="not"&&isShipped(st)) return false;
+    if(STATUSES.includes(filt.ship)&&st!==filt.ship) return false;
+    if(filt.agent!=="all"&&o.agent!==filt.agent) return false;
+    if(q&&![o.name,o.supplier,o.tracking,o.agent].join(" ").toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const cards=list.map(([id,o])=>{const c=calc(o);
+    return `<button class="card ocard" type="button" data-open="${esc(id)}">
+      <div class="ph">${o.imageId?`<img src="/_blob/${esc(o.imageId)}" alt="" loading="lazy">`:`<span class="no">No photo</span>`}<span class="nb">#${esc(o.num)}</span><span class="chip stc ${stClass(o.status)}">${esc(o.status||"Not shipped")}</span></div>
+      <div class="body"><h3>${esc(o.name||"Untitled product")}</h3>
+        <div class="chips"><span class="chip">${esc(o.agent||"No agent")}</span><span class="chip ${mClass(o.method)}">${esc(o.method==="Air (flight)"?"Air":o.method||"Sea / Air?")}</span></div>
+        <div class="ostats num"><div><span>Cost</span><b>${kshShort(c.total)}</b></div><div><span>Per piece</span><b>${ksh(c.cpp)}</b></div><div><span>Profit</span><b class="${c.priced?(c.prof<0?"neg":"pos"):""}">${c.priced?kshShort(c.prof):"—"}</b></div></div>
+      </div></button>`}).join("");
+  if(filt.ship==="not") filt.ship="Not shipped";
+  const stCount=s=>[...orders.values()].filter(o=>(STATUSES.includes(o.status)?o.status:"Not shipped")===s).length;
+  const dotC={"Not shipped":"var(--warn)","Shipped":"var(--good)","Arrived at agent":"var(--move)","In transit to Kenya":"var(--move)","Received":"var(--good)"};
+  const segShip=[["all","All",orders.size,""]].concat(filt.ship==="shipped"?[["shipped","All shipped",orders.size-stCount("Not shipped"),"var(--good)"]]:[])
+    .concat(STATUSES.map(s=>[s,s==="In transit to Kenya"?"In transit":s,stCount(s),dotC[s]]));
+  return `
+  <div class="phead"><div class="grow"><h1>Orders</h1><p>${list.length} of ${orders.size} orders</p></div><button class="btn primary" type="button" data-add>+ Add order</button></div>
+  <div class="toolbar">
+    <div class="seg status" role="group" aria-label="Filter by shipping status">${segShip.map(([v,l,c,col])=>`<button type="button" data-f="${esc(v)}" aria-pressed="${filt.ship===v}">${col?`<i class="dot" style="background:${col}"></i>`:""}${esc(l)} <span class="cnt">${c}</span></button>`).join("")}</div>
+    <div class="seg" role="group" aria-label="Filter by agent">${[["all","All agents"],...agents.map(a=>[a,a])].map(([v,l])=>`<button type="button" data-a="${esc(v)}" aria-pressed="${filt.agent===v}">${esc(l)}</button>`).join("")}</div>
+    <input class="search" id="q" type="search" placeholder="Search name, supplier, tracking…" aria-label="Search orders" value="${esc(filt.q)}">
+  </div>
+  <section class="ogrid">${cards||`<div class="empty">No orders match this filter.</div>`}${canWrite?`<button class="addcard" type="button" data-add>+ Add an order</button>`:""}</section>`;
+}
+function pricingPage(){
+  const rows=sorted().map(([id,o])=>{const c=calc(o);
+    const priceCell=c.hasVars?`<span class="tag">Priced per colour</span>`:`<input id="sell-${esc(id)}" data-sell="${esc(id)}" type="number" step="any" inputmode="decimal" placeholder="KSh" value="${esc(o.sell??"")}" aria-label="Selling price for order ${esc(o.num)}">`;
+    const ppp=c.hasVars?(c.priced?c.prof/c.priced:null):c.oppp, mg=c.hasVars?(c.rev?c.prof/c.rev:null):c.omgn;
+    return `<tr><td><div class="pname" data-open="${esc(id)}">${img(o,"thumb")}<div><div class="nm" style="max-width:260px">${esc(o.name||"Untitled")}</div><div class="meta">#${esc(o.num)} · ${esc(o.agent||"")}</div></div></div></td>
+      <td class="r num">${c.pieces||"—"}</td><td class="r num">${ksh(c.cpp)}</td><td class="r num hint">${ksh(c.breakeven)}</td><td class="r">${priceCell}</td>
+      <td class="r num" data-o="ppp">${ppp==null?"—":`<span class="${ppp<0?"neg":"pos"}">${ksh(ppp)}</span>`}</td><td class="r num" data-o="mg">${pct(mg)}</td>
+      <td class="r num" data-o="tp">${c.priced?`<b class="${c.prof<0?"neg":"pos"}">${ksh(c.prof)}</b>`:"—"}</td></tr>`}).join("");
+  const locals=[...jumia.entries()].filter(([id,p])=>!isLinked(id,p)).sort((a,b)=>n(a[1].num)-n(b[1].num));
+  const lrows=locals.map(([id,p])=>{const c=jcalc(p), be=c.comm<100?(c.buy+c.fee)/(1-c.comm/100):null, o=lOut(id);
+    return `<tr data-lid="${esc(id)}"><td><div class="pname">${img(p,"thumb")}<div><div class="nm" style="max-width:260px">${esc(p.name||"Untitled")}</div><div class="meta">Bought locally · ${+c.comm.toFixed(2)}% + ${ksh(c.fee)} transport</div></div></div></td>
+      <td class="r num">${c.qty||"—"}</td><td class="r num">${ksh(c.buy)}</td><td class="r num hint">${ksh(be)}</td>
+      <td class="r"><input id="lsell-${esc(id)}" data-lsell="${esc(id)}" type="number" step="any" inputmode="decimal" placeholder="KSh" value="${esc(p.sell??"")}" aria-label="Selling price for ${esc(p.name||"product")}"></td>
+      <td class="r num" data-l="ppp">${o.ppp}</td><td class="r num" data-l="mg">${o.mg}</td><td class="r num" data-l="tp">${o.tp}</td></tr>`}).join("");
+  return `
+  <div class="phead"><div class="grow"><h1>Pricing</h1><p>Type a selling price per piece. Profit is after Jumia's ${(n(settings.commission)*100).toFixed(1).replace(/\.0$/,"")}% commission${n(settings.other)?` + transport per item`:""}.</p></div></div>
+  <section class="card"><div class="tablewrap"><table class="pt num">
+    <thead><tr><th>Product</th><th class="r">Pieces</th><th class="r">Cost / piece</th><th class="r">Break-even price</th><th class="r">Selling price</th><th class="r">Profit / piece</th><th class="r">Margin</th><th class="r">Total profit</th></tr></thead>
+    <tbody>${rows}${lrows?`<tr><td colspan="8" style="padding:14px 12px 6px;font-weight:700">Stock bought locally <span class="hint" style="font-weight:500">(not from an Alibaba order)</span></td></tr>${lrows}`:""}</tbody>
+    <tfoot id="pFoot">${pFoot()}</tfoot>
+  </table></div></section>
+  <p class="hint">Break-even price is the lowest price that covers the cost per piece after commission. For products with several colours at different prices, open the order and add colour rows. These totals are the same numbers the Dashboard and the Jumia page show.</p>`;
+}
+function lOut(id){const c=jcalc(jumia.get(id));return {ppp:c.ppp==null?"—":`<span class="${c.ppp<0?"neg":"pos"}">${ksh(c.ppp)}</span>`,mg:pct(c.mgn),tp:c.tp==null?"—":`<b class="${c.tp<0?"neg":"pos"}">${ksh(c.tp)}</b>`}}
+function pFoot(){
+  const G=grand(), T=G.T, L=G.L, row=(lab,hint,val,cls="")=>`<tr class="sum ${cls}"><td colspan="7" class="r">${lab} <span class="hint">${hint}</span></td><td class="r ${cls.includes("grand")?(G.prof<0?"neg":"pos"):""}">${val}</td></tr>`;
+  return `<tr><td>All products</td><td class="r">${G.pcs}</td><td></td><td></td><td class="r">${G.sales?ksh(G.sales)+" sales":""}</td><td></td><td></td><td></td></tr>
+    ${row("Money invested","(orders "+ksh(T.spent)+(L.count?" + local stock "+ksh(L.inv):"")+")",ksh(G.inv))}
+    ${row("Sales if everything sells","",G.priced?ksh(G.sales):"—")}
+    ${row("Shipping & agent fees","(already inside the orders' cost)",ksh(T.fees))}
+    ${row("Total Jumia commission","(commission % of sales + transport)",G.priced?ksh(G.comm):"—")}
+    ${L.count?row("Profit from orders · from local stock","",`${ksh(T.prof)} · ${ksh(L.prof)}`):""}
+    ${row("Total profit","(after cost, shipping & commission)",G.priced?ksh(G.prof):"—","grand")}`;
+}
+function settingsPage(){
+  return `
+  <div class="phead"><div class="grow"><h1>Settings</h1><p>Used for every order's calculations</p></div></div>
+  <section class="card pad"><div class="settings">
+    <div class="field"><label for="setRate">Exchange rate (KSh per $1)</label><input id="setRate" type="number" step="0.01" inputmode="decimal" value="${esc(settings.rate)}"></div>
+    <div class="field"><label for="setComm">Jumia commission (%)</label><input id="setComm" type="number" step="0.1" inputmode="decimal" value="${esc(+(n(settings.commission)*100).toFixed(2))}"></div>
+    <div class="field"><label for="setOther">Default Jumia transport per item (KSh)</label><input id="setOther" type="number" step="1" inputmode="decimal" value="${esc(settings.other)}"></div>
+    <div class="field"><label for="setIdle">Auto-lock after no activity</label><select id="setIdle">${[1,2,5,10,15,30].map(m=>`<option value="${m}" ${m===idleMin?"selected":""}>${m} minute${m>1?"s":""}</option>`).join("")}</select></div>
+  </div><p class="hint" style="margin:14px 0 0"><button class="btn sm" type="button" data-lock>Lock the app now</button></p><p class="hint" style="margin:10px 0 0">The app locks itself and asks for your PIN when nobody has touched it for the time you choose above. Use the rate you actually paid at (check your bank or M-Pesa statement). Jumia keeps a commission (15% for iPhone cases, 18% for Samsung cases, so 18% is the safe planning rate) plus a transport contribution that depends on size: about KSh 60–120 for small items and KSh 400 for heater-sized ones. Set transport per order in each order; this default applies when an order has none.</p></section>`;
+}
+
+/* ---------- drawer ---------- */
+function field(id,key,label,val,type="text",extra=""){
+  return `<div class="field ${extra}"><label for="${id}">${label}</label><input id="${id}" data-k="${key}" type="${type}" value="${esc(val??"")}" ${type==="number"?'step="any" inputmode="decimal"':""}></div>`;
+}
+function select(id,key,label,val,opts){
+  return `<div class="field"><label for="${id}">${label}</label><select id="${id}" data-k="${key}"><option value="">—</option>${opts.map(o=>`<option${o===val?" selected":""}>${esc(o)}</option>`).join("")}</select></div>`;
+}
+function openDrawer(id){openId=id;renderDrawer(true)}
+function closeDrawer(){openId=null;$("#drawerRoot").innerHTML="";document.body.style.overflow=""}
+function renderDrawer(full){
+  const root=$("#drawerRoot");
+  if(!openId||!orders.has(openId)){ if(openId) closeDrawer(); return }
+  const o=orders.get(openId), c=calc(o);
+  if(!full&&root.querySelector(".drawer")){ updateDrawer(o,c); return }
+  const agents=[...new Set([...[...orders.values()].map(x=>x.agent).filter(Boolean)])];
+  document.body.style.overflow="hidden";
+  root.innerHTML=`<div class="scrim" data-close></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <div class="dhead"><span class="chip ${stClass(o.status)}" id="dSt">${esc(o.status||"Not shipped")}</span><h2 id="dTitle"></h2><button class="btn" type="button" data-close>Close</button></div>
+    <div class="dbody">
+      <section class="sect"><h4>Order details</h4>
+        <div class="prow">
+          <div style="display:grid;gap:8px;justify-items:start">
+            ${o.imageId?`<img class="pimg" src="/_blob/${esc(o.imageId)}" alt="">`:`<div class="pimg no">No photo</div>`}
+            <label class="btn sm" ${assets?"":"hidden"}>${o.imageId?"Change photo":"Add photo"}<input type="file" accept="image/*" id="photoIn" hidden></label>
+          </div>
+          <div class="form">
+            ${field("fName","name","Product name",o.name,"text","full")}
+            ${field("fSupp","supplier","Supplier",o.supplier)}
+            <div class="field"><label for="fAgent">Agent</label><input id="fAgent" data-k="agent" list="agentList" value="${esc(o.agent||"")}"><datalist id="agentList">${agents.map(a=>`<option value="${esc(a)}">`).join("")}</datalist></div>
+            ${select("fMethod","method","Shipping method",o.method,METHODS)}
+            ${select("fStatus","status","Status",o.status,STATUSES)}
+            ${field("fTrk","tracking","Tracking number",o.tracking,"text","full")}
+            ${field("fUsd","usd","Product cost (USD)",o.usd,"number")}
+            ${field("fFees","fees","Shipping / agent fees (KSh)",o.fees,"number")}
+            ${field("fPcs","pieces","Pieces ordered",o.pieces,"number")}
+            ${field("fSell","sell","Selling price per piece (KSh)",o.sell,"number")}
+            ${field("fFee","fee","Jumia transport per item (KSh)",o.fee,"number")}
+            ${field("fLink","link","Alibaba link",o.link,"url","full")}
+          </div>
+        </div>
+        ${o.link?`<a class="hint" href="${esc(o.link)}" target="_blank" rel="noopener">Open on Alibaba ↗</a>`:""}
+        <div class="calc num" id="dCalc"></div>
+      </section>
+      <section class="sect"><h4>Colours & sizes (optional)</h4>
+        <p class="hint" style="margin:0">Use this when colours sell at different prices. Once you add colours, their pieces and prices replace "Pieces ordered" and "Selling price" above. Leave commission or transport empty to use the order's values.</p>
+        <div class="tablewrap"><table class="vars num"><thead><tr><th>Colour / variant</th><th class="r">Pieces</th><th class="r">Sell (KSh)</th><th class="r">Comm. %</th><th class="r">Transport / pc</th><th class="r">Profit / pc</th><th class="r">Margin</th><th class="r">Profit total</th><th></th></tr></thead>
+          <tbody id="vBody"></tbody><tfoot id="vFoot"></tfoot></table></div>
+        <div><button class="btn sm" type="button" id="addVar">+ Add colour / size</button></div>
+      </section>
+      <section class="sect"><h4>Remove</h4><div id="delZone"><button class="btn danger sm" type="button" id="delAsk">Delete this order</button></div></section>
+    </div>
+  </aside>`;
+  renderVarRows(o); updateDrawer(o,c);
+}
+function renderVarRows(o){
+  const body=$("#vBody"); if(!body) return;
+  body.innerHTML=(o.variants||[]).map(v=>`<tr data-vid="${esc(v.id)}">
+    <td><input data-vk="name" value="${esc(v.name||"")}" placeholder="e.g. Black" aria-label="Colour or variant"></td>
+    <td><input data-vk="pieces" type="number" step="1" inputmode="numeric" value="${esc(v.pieces??"")}" style="text-align:right" aria-label="Pieces"></td>
+    <td><input data-vk="sell" type="number" step="any" inputmode="decimal" value="${esc(v.sell??"")}" style="text-align:right" aria-label="Selling price"></td>
+    <td><input data-vk="comm" type="number" step="any" inputmode="decimal" value="${esc(v.comm??"")}" placeholder="${(n(settings.commission)*100).toFixed(1).replace(/\.0$/,"")}" style="text-align:right" aria-label="Commission percent"></td>
+    <td><input data-vk="other" type="number" step="any" inputmode="decimal" value="${esc(v.other??"")}" placeholder="${blank(o.fee)?n(settings.other):n(o.fee)}" style="text-align:right" aria-label="Transport per piece"></td>
+    <td class="r" data-out="ppp"></td><td class="r" data-out="mgn"></td><td class="r" data-out="vp"></td>
+    <td><button class="x" type="button" data-delvar="${esc(v.id)}" aria-label="Remove this row">×</button></td></tr>`).join("")
+    || `<tr><td colspan="9" class="hint" style="padding:12px 4px">No colours added. That's fine if every piece sells at the same price.</td></tr>`;
+}
+function updateDrawer(o,c){
+  const d=$(".drawer"); if(!d) return;
+  $("#dTitle").textContent=`#${o.num} · ${o.name||"Untitled product"}`;
+  const st=$("#dSt"); st.className="chip "+stClass(o.status); st.textContent=o.status||"Not shipped";
+  d.querySelectorAll("[data-k]").forEach(el=>{ if(el!==document.activeElement) el.value=o[el.dataset.k]??"" });
+  const pp=c.hasVars?(c.priced?c.prof/c.priced:null):c.oppp;
+  $("#dCalc").innerHTML=`<div><span>Total cost</span><b>${ksh(c.total)}</b></div><div><span>Cost per piece</span><b>${ksh(c.cpp)}</b></div><div><span>Profit per piece</span><b class="${pp==null?"":pp<0?"neg":"pos"}">${ksh(pp)}</b></div><div><span>Total profit</span><b class="${c.priced?(c.prof<0?"neg":"pos"):""}">${c.priced?ksh(c.prof):"—"}</b></div>`;
+  ["fPcs","fSell"].forEach(i=>{const el=$("#"+i); if(el){el.disabled=c.hasVars; el.title=c.hasVars?"Set by the colour rows below":""}});
+  const ids=(o.variants||[]).map(v=>v.id).join("|"), shown=[...d.querySelectorAll("#vBody tr[data-vid]")].map(t=>t.dataset.vid).join("|");
+  if(ids!==shown&&!$("#vBody").contains(document.activeElement)) renderVarRows(o);
+  (o.variants||[]).forEach((v,i)=>{
+    const tr=d.querySelector(`tr[data-vid="${CSS.escape(v.id)}"]`); if(!tr) return; const r=c.rows[i];
+    tr.querySelectorAll("[data-vk]").forEach(el=>{ if(el!==document.activeElement) el.value=v[el.dataset.vk]??"" });
+    tr.querySelector('[data-out="ppp"]').innerHTML=r.ppp==null?"—":`<span class="${r.ppp<0?"neg":"pos"}">${ksh(r.ppp)}</span>`;
+    tr.querySelector('[data-out="mgn"]').textContent=pct(r.mgn);
+    tr.querySelector('[data-out="vp"]').innerHTML=r.vp==null?"—":`<span class="${r.vp<0?"neg":""}">${ksh(r.vp)}</span>`;
+  });
+  $("#vFoot").innerHTML=(o.variants||[]).length?`<tr><td>Total</td><td class="r">${c.pieces}</td><td colspan="5" class="r hint">Sales if all sold: ${c.priced?ksh(c.rev):"—"}</td><td class="r ${c.prof<0?"neg":"pos"}">${c.priced?ksh(c.prof):"—"}</td><td></td></tr>`:"";
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click",e=>{
+  const t=e.target;
+  const tb=t.closest("[data-tab]"); if(tb){ if(openId) closeDrawer(); go(tb.dataset.tab); return }
+  const op=t.closest("[data-open]"); if(op&&!t.closest("input")){openDrawer(op.dataset.open);return}
+  if(t.closest("[data-close]")){closeDrawer();return}
+  if(t.closest("[data-add]")){addOrder();return}
+  const k=t.closest("[data-kpi]"); if(k){const a=k.dataset.kpi; if(a==="pricing"){go("pricing")} else {filt.ship=a==="all"?"all":a;filt.agent="all";go("orders")} return}
+  const sg=t.closest("[data-stage]"); if(sg){filt.ship=sg.dataset.stage==="Not shipped"?"not":sg.dataset.stage;filt.agent="all";go("orders");return}
+  const f=t.closest("[data-f]"); if(f){filt.ship=f.dataset.f;renderPage();return}
+  const a=t.closest("[data-a]"); if(a){filt.agent=a.dataset.a;renderPage();return}
+  if(t.closest("#addVar")){
+    const o=orders.get(openId); o.variants=[...(o.variants||[]),{id:"v"+Date.now().toString(36),name:"",pieces:"",sell:"",comm:"",other:""}];
+    setField(openId,"variants",o.variants,true); renderVarRows(o); updateDrawer(o,calc(o));
+    const last=[...document.querySelectorAll('#vBody [data-vk="name"]')].pop(); last&&last.focus(); return}
+  const dv=t.closest("[data-delvar]"); if(dv){
+    const o=orders.get(openId); o.variants=(o.variants||[]).filter(v=>v.id!==dv.dataset.delvar);
+    setField(openId,"variants",o.variants,true); renderVarRows(o); updateDrawer(o,calc(o)); renderPage(); return}
+  if(t.closest("#delAsk")){$("#delZone").innerHTML=`<div class="confirm">Delete order #${esc(orders.get(openId).num)} and its colours? <button class="btn danger sm" type="button" id="delYes">Delete</button><button class="btn sm" type="button" id="delNo">Keep it</button></div>`;return}
+  if(t.closest("#delNo")){$("#delZone").innerHTML=`<button class="btn danger sm" type="button" id="delAsk">Delete this order</button>`;return}
+  if(t.closest("#delYes")){const id=openId;deletedOrders.add(id);orders.delete(id);closeDrawer();renderNav();renderPage();write("orders/"+id,r=>r.delete());toast("Order deleted");return}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&openId)closeDrawer()});
+document.addEventListener("input",e=>{
+  const t=e.target;
+  if(t.id==="q"){filt.q=t.value;renderPage();return}
+  if(t.dataset.sell){
+    const id=t.dataset.sell, v=t.value===""?"":Number(t.value); setField(id,"sell",v);
+    const o=orders.get(id), c=calc(o), tr=t.closest("tr");
+    tr.querySelector('[data-o="ppp"]').innerHTML=c.oppp==null?"—":`<span class="${c.oppp<0?"neg":"pos"}">${ksh(c.oppp)}</span>`;
+    tr.querySelector('[data-o="mg"]').textContent=pct(c.omgn);
+    tr.querySelector('[data-o="tp"]').innerHTML=c.priced?`<b class="${c.prof<0?"neg":"pos"}">${ksh(c.prof)}</b>`:"—";
+    const pf=$("#pFoot"); if(pf) pf.innerHTML=pFoot();
+    return}
+  if(t.dataset.lsell){
+    const id=t.dataset.lsell, v=t.value===""?"":Number(t.value), p=jumia.get(id); if(!p) return; p.sell=v;
+    debounced("j"+id+"sell",()=>write("jumia/"+id,r=>r.update({sell:jumia.get(id)?.sell??v})));
+    const o=lOut(id), tr=t.closest("tr"); for(const f of ["ppp","mg","tp"]) tr.querySelector(`[data-l="${f}"]`).innerHTML=o[f];
+    const pf=$("#pFoot"); if(pf) pf.innerHTML=pFoot();
+    return}
+  if(!openId) return;
+  if(t.dataset.k){
+    const k=t.dataset.k; let v=t.value; if(t.type==="number") v=v===""?"":Number(v);
+    setField(openId,k,v,t.tagName==="SELECT"); const o=orders.get(openId); updateDrawer(o,calc(o)); if(t.tagName==="SELECT") renderPage(); return}
+  if(t.dataset.vk){
+    const vid=t.closest("tr").dataset.vid, k=t.dataset.vk; let v=t.value; if(t.type==="number") v=v===""?"":Number(v);
+    const o=orders.get(openId); o.variants=(o.variants||[]).map(x=>x.id===vid?{...x,[k]:v}:x);
+    setField(openId,"variants",o.variants); updateDrawer(o,calc(o));
+  }
+});
+document.addEventListener("change",async e=>{
+  const t=e.target;
+  if(t.dataset.k&&openId) renderPage();
+  if(t.id==="photoIn"&&t.files[0]){
+    const id=openId;
+    try{ toast("Uploading photo…"); const r=await assets.upload(t.files[0]); setField(id,"imageId",r.id,true); renderDrawer(true); renderPage(); toast("Photo saved") }
+    catch(err){ toast(err&&err.code==="too_large"?"That photo is over 20 MB. Pick a smaller one.":"Couldn't upload the photo. Try again.") }
+  }
+  if(["setRate","setComm","setOther"].includes(t.id)){
+    settings={rate:n($("#setRate").value),commission:n($("#setComm").value)/100,other:n($("#setOther").value)};
+    write("settings/main",r=>r.set(settings)); toast("Settings saved");
+  }
+});
+/* tooltip for chart marks */
+document.addEventListener("pointermove",e=>{const el=e.target.closest&&e.target.closest("[data-tip]");const tip=$("#tip");
+  if(!el){tip.hidden=true;return} tip.textContent=el.dataset.tip; tip.hidden=false;
+  const x=Math.min(e.clientX+12,innerWidth-tip.offsetWidth-8); tip.style.left=x+"px"; tip.style.top=(e.clientY-36)+"px"});
+async function addOrder(){
+  if(!db){toast("Open this page signed in to add orders.");return}
+  const next=Math.max(0,...[...orders.values()].map(o=>n(o.num)))+1;
+  const ref=db.collection("orders").doc();
+  const data={num:next,name:"",pieces:"",sell:"",supplier:"",agent:"",method:"",status:"Not shipped",tracking:"",link:"",usd:"",fees:"",imageId:"",variants:[]};
+  orders.set(ref.id,data); renderNav(); renderPage(); openDrawer(ref.id);
+  write("orders/"+ref.id,r=>r.set(data)); setTimeout(()=>$("#fName")&&$("#fName").focus(),60);
+}
+let tt; function toast(m){const el=$("#toast");el.textContent=m;el.hidden=false;clearTimeout(tt);tt=setTimeout(()=>el.hidden=true,2400)}
+window.addEventListener("hashchange",()=>{const h=location.hash.replace("#","");if(TABS.some(t=>t[0]===h)) go(h)});
+
+
+/* ---------- Jumia module ---------- */
+function jcalc(p){
+  const buy=n(p.buy), sell=n(p.sell), comm=blank(p.comm)?18:n(p.comm), fee=blank(p.fee)?120:n(p.fee), qty=n(p.qty);
+  const has=!blank(p.sell)&&!blank(p.buy);
+  const commK=sell*comm/100+fee, ppp=has?sell-commK-buy:null, mgn=has&&sell>0?ppp/sell:null;
+  return {buy,sell,comm,fee,qty,commK,ppp,mgn,tp:ppp==null?null:ppp*qty,inv:buy*qty,sales:sell*qty,commT:commK*qty,has};
+}
+const jPill=m=>m==null?"":m<0?'<span class="pill p-bad">Loss</span>':m<0.2?'<span class="pill p-thin">Thin</span>':'<span class="pill p-good">Good</span>';
+function jTotals(){
+  let inv=0,sales=0,comm=0,prof=0,priced=0,count=0,loss=0;
+  for(const [,p] of jumia){count++;const c=jcalc(p);inv+=c.inv;if(!c.has)continue;priced++;sales+=c.sales;comm+=c.commT;prof+=c.tp;if(c.ppp<0)loss++}
+  return {inv,sales,comm,prof,priced,count,loss,mgn:sales?prof/sales:null,roi:inv?prof/inv:null};
+}
+function jSummary(){
+  const J=jTotals(), G=grand(), T={...G,priced:J.priced,count:J.count,loss:J.loss};
+  let v;
+  if(!T.priced) v=["v-none","?","No prices yet","Add buying and selling prices to see whether the business makes sense."];
+  else if(T.prof<0) v=["v-bad","!","The business is losing money",`Expected loss of ${ksh(-T.prof)}. Raise prices or drop the products marked "Loss".`];
+  else if(T.mgn<0.2) v=["v-thin","~","It makes money, but margins are thin",`${pct(T.mgn)} margin after Jumia's commission. Returns, ads or delivery costs could eat most of it.`];
+  else v=["v-good","✓","Yes, the business makes sense",`Every KSh 100 you invest brings back about KSh ${Math.round(100+T.roi*100)} if everything sells. ${pct(T.mgn)} margin after Jumia's commission.`];
+  if(T.priced&&T.loss&&T.prof>=0) v[3]+=` ${T.loss} product${T.loss>1?"s are":" is"} priced at a loss.`;
+  return `<div class="verdict ${v[0]}"><span class="vi">${v[1]}</span><div><b>${v[2]}</b><p>${esc(v[3])}</p></div></div>
+  <div class="jsum num">
+    <div class="card"><span class="lab">Money invested</span><b>${ksh(T.inv)}</b><span class="s">orders ${ksh(G.T.spent)}${G.L.count?` + local ${ksh(G.L.inv)}`:""}</span></div>
+    <div class="card"><span class="lab">Sales if all sell</span><b>${ksh(T.sales)}</b><span class="s">${T.priced} of ${T.count} products priced</span></div>
+    <div class="card"><span class="lab">Jumia commission</span><b>${ksh(T.comm)}</b><span class="s">what Jumia keeps</span></div>
+    <div class="card"><span class="lab">Total profit</span><b class="${T.prof<0?"neg":"pos"}">${T.priced?ksh(T.prof):"—"}</b><span class="s">after buying price & commission</span></div>
+    <div class="card"><span class="lab">Return on money</span><b class="${T.roi<0?"neg":"pos"}">${T.roi==null?"—":pct(T.roi)}</b><span class="s">profit ÷ money invested</span></div>
+  </div>`;
+}
+function jRowOut(id){
+  const p=jumia.get(id), c=jcalc(p);
+  return {ppp:c.ppp==null?"—":`<span class="${c.ppp<0?"neg":"pos"}">${ksh(c.ppp)}</span>`,commK:c.has?ksh(c.commK):"—",mgn:c.mgn==null?"—":pct(c.mgn)+" "+jPill(c.mgn),tp:c.tp==null?"—":`<b class="${c.tp<0?"neg":"pos"}">${ksh(c.tp)}</b>`};
+}
+function jFoot(){
+  const G=grand(), T={...G,priced:jTotals().priced}, S=stockTotals();
+  return `<tr><td>All products</td><td class="r instock">${S.left}</td><td class="r">${S.sold}</td><td class="r">${S.stockIn}</td><td class="r grp">${ksh(T.inv)}<div class="hint" style="font-weight:500">invested</div></td><td class="r">${ksh(T.sales)}<div class="hint" style="font-weight:500">sales</div></td><td></td><td></td><td class="r">${ksh(T.comm)}</td><td></td><td></td><td class="r ${T.prof<0?"neg":"pos"}">${T.priced?ksh(T.prof):"—"}</td><td></td><td></td></tr>`;
+}
+function jumiaPage(){
+  const list=[...jumia.entries()].sort((a,b)=>(leftOf(b[0])>0)-(leftOf(a[0])>0)||n(a[1].num)-n(b[1].num));
+  const rows=list.map(([id,p])=>{const o=jRowOut(id), L=linkOf(id,p), lk=L&&!L.orphan, ro=lk?`readonly title="Comes from order #${esc(L.o.num)}. Change it in Orders." style="opacity:.7"`:"";
+    const thumb=p.imageId?`<img class="thumb" src="/_blob/${esc(p.imageId)}" alt="">`:`<div class="thumb no" style="display:grid;place-items:center;font-size:.65rem;color:var(--muted)">Photo</div>`;
+    const del=jConfirm===id?`<span class="confirm" style="padding:5px 8px">Delete? <button class="btn danger sm" type="button" data-jdelyes="${esc(id)}">Yes</button><button class="btn sm" type="button" data-jdelno>No</button></span>`:`<button class="x" type="button" data-jdel="${esc(id)}" aria-label="Delete product">×</button>`;
+    return `<tr data-jid="${esc(id)}">
+      <td><div class="pn">${assets?`<label title="Change photo">${thumb}<input type="file" accept="image/*" data-jphoto="${esc(id)}" hidden></label>`:thumb}<input id="jn-${esc(id)}" data-jk="name" value="${esc(p.name||"")}" placeholder="Product name" aria-label="Product name">${lk?`<button class="btn ghost sm" type="button" data-open="${esc(L.oid)}" title="Linked to this order" style="flex-shrink:0;padding:2px 6px;font-size:.7rem">#${esc(L.o.num)}</button>`:""}</div></td>
+      <td class="r instock" data-jo="left">${stockHtml(id)}</td>
+      <td class="r" data-jo="sold">${soldOf(id)}</td>
+      <td class="r"><input id="jq-${esc(id)}" class="q" data-jk="qty" type="number" step="1" inputmode="numeric" value="${esc(p.qty??"")}" aria-label="Stock in" ${ro}></td>
+      <td class="r grp"><input id="jb-${esc(id)}" class="n" data-jk="buy" type="number" step="any" inputmode="decimal" value="${esc(blank(p.buy)?"":+(+p.buy).toFixed(2))}" aria-label="Buying price" ${ro}></td>
+      <td class="r"><input id="js-${esc(id)}" class="n" data-jk="sell" type="number" step="any" inputmode="decimal" value="${esc(p.sell??"")}" aria-label="Selling price"></td>
+      <td class="r"><input id="jc-${esc(id)}" class="c" data-jk="comm" type="number" step="any" inputmode="decimal" value="${esc(p.comm??18)}" aria-label="Jumia commission percent"></td>
+      <td class="r"><input id="jf-${esc(id)}" class="n" data-jk="fee" type="number" step="any" inputmode="decimal" value="${esc(p.fee??120)}" aria-label="Jumia transport per item"></td>
+      <td class="r" data-jo="commK">${o.commK}</td>
+      <td class="r" data-jo="ppp">${o.ppp}</td>
+      <td class="r" data-jo="mgn">${o.mgn}</td>
+      <td class="r" data-jo="tp">${o.tp}</td>
+      <td class="r"><button class="btn sm sellbtn" type="button" data-sell="${esc(id)}" ${leftOf(id)>0?"":"disabled"}>Sell</button></td>
+      <td class="r">${del}</td></tr>`}).join("");
+  const d=jDraft, dc=jcalc(d);
+  const addForm=jAdd?`<section class="card pad"><div class="ctitle"><h2>Add a product</h2><button class="btn ghost sm" type="button" data-jaddtoggle>Cancel</button></div>
+    <div class="jadd">
+      <label class="ph" id="jaPh">${d.preview?`<img src="${d.preview}" alt="">`:"Tap to add a photo"}${assets?`<input type="file" accept="image/*" id="jaPhoto" hidden>`:""}</label>
+      <div class="jform">
+        <div class="field wide"><label for="jaName">Product name (heading)</label><input id="jaName" data-jd="name" value="${esc(d.name)}" placeholder="e.g. Clear magnolia flower iPhone case"></div>
+        <div class="field"><label for="jaBuy">Buying price (KSh)</label><input id="jaBuy" data-jd="buy" type="number" step="any" inputmode="decimal" value="${esc(d.buy)}"></div>
+        <div class="field"><label for="jaSell">Selling price (KSh)</label><input id="jaSell" data-jd="sell" type="number" step="any" inputmode="decimal" value="${esc(d.sell)}"></div>
+        <div class="field"><label for="jaComm">Jumia commission (%)</label><input id="jaComm" data-jd="comm" type="number" step="any" inputmode="decimal" value="${esc(d.comm)}"></div>
+        <div class="field"><label for="jaFee">Jumia transport per item (KSh)</label><input id="jaFee" data-jd="fee" type="number" step="any" inputmode="decimal" value="${esc(d.fee)}"></div>
+        <div class="field"><label for="jaQty">Pieces</label><input id="jaQty" data-jd="qty" type="number" step="1" inputmode="numeric" value="${esc(d.qty)}"></div>
+        <div class="acts"><button class="btn primary" type="button" data-jsave>Save product</button><span class="jprev num" id="jaPrev">${dc.has?`Profit per piece: <span class="${dc.ppp<0?"neg":"pos"}">${ksh(dc.ppp)}</span> · ${pct(dc.mgn)} ${jPill(dc.mgn)}`:"Enter buying and selling price to see the profit"}</span></div>
+      </div>
+    </div></section>`:"";
+  return `
+  <div class="phead"><div class="grow"><h1>Jumia</h1><p>Your Jumia products. Buying price, selling price and Jumia's commission give you the real profit.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap">${canWrite?`<button class="btn sellbtn" type="button" data-sell="">Record a sale</button>`:""}${canWrite&&!jAdd?`<button class="btn primary" type="button" data-jaddtoggle>+ Add product</button>`:""}</div></div>
+  <div class="seg jsub" role="tablist" aria-label="Jumia sections">${[["overview","Overview"],["stock","Stock"],["sales","Sales"]].map(([k,l])=>`<button type="button" role="tab" data-jsub="${k}" aria-pressed="${jSub===k}">${l}${k==="stock"?` <span class="cnt">${stockTotals().left}</span>`:k==="sales"?` <span class="cnt">${sales.size}</span>`:""}</button>`).join("")}</div>
+  ${jSub==="overview"?`<div id="jStock">${stockStrip()}</div>
+  <div id="jSum" style="display:grid;gap:14px">${jSummary()}</div>
+  ${lowStock()}`:""}
+  ${jSub==="stock"?`${addForm}
+  <section class="card"><div class="ctitle pad" style="margin:0;padding-bottom:6px"><h2>Available stock</h2><span>Sorted by how much is left</span></div><div class="tablewrap"><table class="jt num">
+    <thead><tr><th>Product</th><th class="r instock">In stock</th><th class="r">Sold</th><th class="r">Stock in</th><th class="r grp">Buying price</th><th class="r">Selling price</th><th class="r">Jumia %</th><th class="r">Transport</th><th class="r">Commission</th><th class="r">Profit / piece</th><th class="r">Margin</th><th class="r">Expected profit</th><th></th><th></th></tr></thead>
+    <tbody>${rows||`<tr><td colspan="14" class="hint" style="padding:18px">No products yet. Tap "+ Add product" to add your first one.</td></tr>`}</tbody>
+    <tfoot id="jFoot">${jFoot()}</tfoot>
+  </table></div></section>`:""}
+  ${jSub==="sales"?salesHistory():""}
+  ${jSub==="stock"?`<p class="hint">Click any cell to edit it; changes save automatically. "Stock in" is how many pieces you received; "In stock" is what's left after sales. Buying price is what one piece cost you including shipping. Products with an order number (#) come straight from that order: their pieces and buying price follow the order, and changing the selling price, Jumia % or transport here changes the order too, so Dashboard, Pricing and Jumia always show the same numbers.</p>`:""}`;
+}
+async function jSave(){
+  const d=jDraft;
+  if(!d.name.trim()||blank(d.buy)||blank(d.sell)){toast("Add a name, buying price and selling price first.");return}
+  let imageId="";
+  if(d.file&&assets){try{toast("Uploading photo…");imageId=(await assets.upload(d.file)).id}catch(e){toast("Couldn't upload the photo. The product will save without it.")}}
+  const num=Math.max(0,...[...jumia.values()].map(x=>n(x.num)))+1;
+  const ref=db.collection("jumia").doc();
+  const data={num,name:d.name.trim(),buy:n(d.buy),sell:n(d.sell),comm:blank(d.comm)?18:n(d.comm),fee:blank(d.fee)?120:n(d.fee),qty:blank(d.qty)?"":n(d.qty),imageId,from:""};
+  jumia.set(ref.id,data); write("jumia/"+ref.id,r=>r.set(data));
+  if(d.preview) URL.revokeObjectURL(d.preview);
+  jDraft={name:"",buy:"",sell:"",comm:18,fee:120,qty:""}; jAdd=false; renderPage(); toast("Product saved");
+}
+document.addEventListener("click",e=>{
+  const t=e.target;
+  const js=t.closest("[data-jsub]"); if(js){jSub=js.dataset.jsub;try{localStorage.setItem("zs_jsub",jSub)}catch{};jConfirm=null;renderPage();return}
+  if(t.closest("[data-jaddtoggle]")){jAdd=!jAdd; if(jAdd) jSub="stock";renderPage();if(jAdd)setTimeout(()=>$("#jaName")&&$("#jaName").focus(),40);return}
+  if(t.closest("[data-jsave]")){jSave();return}
+  const dl=t.closest("[data-jdel]"); if(dl){const L=linkOf(dl.dataset.jdel,jumia.get(dl.dataset.jdel)); if(L&&!L.orphan){toast(`This product comes from order #${L.o.num}. Delete the order (or the colour) in Orders instead.`);return} jConfirm=dl.dataset.jdel;renderPage();return}
+  if(t.closest("[data-jdelno]")){jConfirm=null;renderPage();return}
+  const dy=t.closest("[data-jdelyes]"); if(dy){const id=dy.dataset.jdelyes;jumia.delete(id);jConfirm=null;renderPage();write("jumia/"+id,r=>r.delete());toast("Product deleted");return}
+});
+document.addEventListener("input",e=>{
+  const t=e.target;
+  if(t.dataset.jd){jDraft[t.dataset.jd]=t.value;const dc=jcalc(jDraft),pv=$("#jaPrev");if(pv)pv.innerHTML=dc.has?`Profit per piece: <span class="${dc.ppp<0?"neg":"pos"}">${ksh(dc.ppp)}</span> · ${pct(dc.mgn)} ${jPill(dc.mgn)}`:"Enter buying and selling price to see the profit";return}
+  if(t.dataset.jk){
+    const tr=t.closest("tr"), id=tr.dataset.jid, k=t.dataset.jk; let v=t.value; if(t.type==="number") v=v===""?"":Number(v);
+    const p=jumia.get(id); if(!p) return;
+    const L=linkOf(id,p);
+    if(L&&!L.orphan){
+      if(k==="buy"||k==="qty") return;
+      if(["sell","comm","fee"].includes(k)){
+        const o=L.o;
+        if(L.v){const fk=k==="fee"?"other":k; o.variants=(o.variants||[]).map(x=>x.id===L.v.id?{...x,[fk]:v}:x); setField(L.oid,"variants",o.variants)}
+        else setField(L.oid,k,v);
+        syncLinked();
+      } else { p[k]=v; debounced("j"+id+k,()=>write("jumia/"+id,r=>r.update({[k]:jumia.get(id)?.[k]??v}))) }
+    } else {
+      p[k]=v;
+      debounced("j"+id+k,()=>write("jumia/"+id,r=>r.update({[k]:jumia.get(id)?.[k]??v})));
+    }
+    const o=jRowOut(id); for(const f of ["commK","ppp","mgn","tp"]) tr.querySelector(`[data-jo="${f}"]`).innerHTML=o[f];
+    tr.querySelector('[data-jo="left"]').innerHTML=stockHtml(id); const sb=tr.querySelector("[data-sell]"); if(sb) sb.disabled=!(leftOf(id)>0);
+    const js=$("#jStock"); if(js) js.innerHTML=stockStrip();
+    const jsu=$("#jSum"); if(jsu) jsu.innerHTML=jSummary(); const jf=$("#jFoot"); if(jf) jf.innerHTML=jFoot();
+  }
+});
+document.addEventListener("change",async e=>{
+  const t=e.target;
+  if(t.id==="jaPhoto"&&t.files[0]){jDraft.file=t.files[0];if(jDraft.preview)URL.revokeObjectURL(jDraft.preview);jDraft.preview=URL.createObjectURL(t.files[0]);$("#jaPh").firstChild.replaceWith(Object.assign(document.createElement("img"),{src:jDraft.preview,alt:""}));return}
+  if(t.dataset.jphoto&&t.files[0]){const id=t.dataset.jphoto;try{toast("Uploading photo…");const r=await assets.upload(t.files[0]);const p=jumia.get(id);if(p){p.imageId=r.id;write("jumia/"+id,x=>x.update({imageId:r.id}))}renderPage();toast("Photo saved")}catch{toast("Couldn't upload the photo. Try again.")}}
+});
+
+
+/* ---------- Sales (POS) ---------- */
+const today=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
+const fmtDate=s=>{if(!s)return"";const d=new Date(s+"T00:00:00");return d.toLocaleDateString("en-KE",{day:"numeric",month:"short"})};
+function soldOf(pid){let q=0;for(const [,x] of sales) if(x.pid===pid) q+=n(x.qty);return q}
+function leftOf(pid){const p=jumia.get(pid);return p?n(p.qty)-soldOf(pid):0}
+function stockHtml(pid){const p=jumia.get(pid);if(!p||blank(p.qty))return"—";const l=leftOf(pid);return `<span class="stk ${l<=0?"out":l<=Math.max(2,n(p.qty)*0.15)?"low":""}">${l<=0?"Sold out":l}</span>`}
+function saleCalc(x){const q=n(x.qty),pr=n(x.price),c=blank(x.comm)?18:n(x.comm),f=blank(x.fee)?120:n(x.fee),b=n(x.buy);const rev=q*pr,commK=rev*c/100+q*f,cost=q*b;return {q,pr,c,f,b,rev,commK,cost,prof:rev-commK-cost}}
+function stockTotals(){let stockIn=0,sold=0,left=0,leftVal=0;for(const [id,p] of jumia){const i=n(p.qty),s=soldOf(id);stockIn+=i;sold+=s;const l=Math.max(0,i-s);left+=l;leftVal+=l*n(p.buy)}return {stockIn,sold,left,leftVal}}
+function salesTotals(from){let rev=0,prof=0,q=0,commK=0,count=0;for(const [,x] of sales){if(from&&x.date<from)continue;const c=saleCalc(x);rev+=c.rev;prof+=c.prof;q+=c.q;commK+=c.commK;count++}return {rev,prof,q,commK,count}}
+function lowStock(){
+  const items=[...jumia.entries()].filter(([id,p])=>!blank(p.qty)&&leftOf(id)<=Math.max(2,n(p.qty)*0.15)).sort((a,b)=>leftOf(a[0])-leftOf(b[0]));
+  if(!items.length) return `<section class="card pad"><div class="ctitle"><h2>Running low</h2></div><p class="hint" style="margin:0">Nothing is running low. All products have plenty in stock.</p></section>`;
+  return `<section class="card pad"><div class="ctitle"><h2>Running low</h2><button class="btn ghost sm" type="button" data-jsub="stock">See all stock →</button></div><div class="list">${items.map(([id,p])=>`<div class="lrow" style="cursor:default">${p.imageId?`<img class="thumb" src="/_blob/${esc(p.imageId)}" alt="">`:`<div class="thumb no"></div>`}<div style="min-width:0"><div class="nm">${esc(p.name)}</div><div class="meta">${soldOf(id)} sold of ${n(p.qty)}</div></div>${stockHtml(id)}</div>`).join("")}</div></section>`;
+}
+function stockStrip(){
+  const S=stockTotals(), A=salesTotals();
+  return `<div class="stock num">
+    <div class="card c-in"><span class="lab">Stock in</span><b>${S.stockIn.toLocaleString("en-KE")}</b><span class="s">pieces received</span></div>
+    <div class="card c-sold"><span class="lab">Sold</span><b>${S.sold.toLocaleString("en-KE")}</b><span class="s">${A.count} sale${A.count===1?"":"s"} recorded</span></div>
+    <div class="card c-left"><span class="lab">In stock</span><b>${S.left.toLocaleString("en-KE")}</b><span class="s">worth ${ksh(S.leftVal)} at cost</span></div>
+    <div class="card c-rev"><span class="lab">Sales so far</span><b>${ksh(A.rev)}</b><span class="s ${A.prof<0?"neg":"pos"}">${A.count?ksh(A.prof)+" profit":"No sales yet"}</span></div>
+  </div>`;
+}
+function salesHistory(){
+  const list=[...sales.entries()].sort((a,b)=>(b[1].date||"").localeCompare(a[1].date||"")||n(b[1].ts)-n(a[1].ts));
+  if(!list.length) return `<section class="card pad"><div class="ctitle"><h2>Sales history</h2></div><p class="hint" style="margin:0">No sales yet. Tap "Sell" on a product, or "Record a sale", each time you sell on Jumia.</p></section>`;
+  const rows=list.slice(0,salesShow).map(([id,x])=>{const c=saleCalc(x), p=jumia.get(x.pid)||{};
+    const del=sConfirm===id?`<span class="confirm" style="padding:5px 8px">Undo sale? <button class="btn danger sm" type="button" data-sdelyes="${esc(id)}">Yes</button><button class="btn sm" type="button" data-sdelno>No</button></span>`:`<button class="x" type="button" data-sdel="${esc(id)}" aria-label="Undo this sale">×</button>`;
+    const ed=sConfirm===id?"":`<button class="btn sm" type="button" data-sedit="${esc(id)}" aria-label="Edit this sale" style="border-color:var(--accent,#7a1f3d);color:var(--accent,#7a1f3d);font-weight:600">✎ Edit sale</button>`;
+    return `<div class="lrow">${p.imageId?`<img class="thumb" src="/_blob/${esc(p.imageId)}" alt="">`:`<div class="thumb no"></div>`}
+      <div style="min-width:0"><div class="nm">${esc(x.name||p.name||"Product")}</div><div class="meta">${fmtDate(x.date)} · ${c.q} × ${ksh(c.pr)}${x.note?" · "+esc(x.note):""}</div></div>
+      <div class="saleamt num"><b>${ksh(c.rev)}</b><span class="${c.prof<0?"neg":"pos"}" style="font-size:.8rem">${c.prof<0?"":"+"}${ksh(c.prof)} profit</span></div><span style="display:flex;gap:4px;align-items:center;flex-shrink:0">${ed}${del}</span></div>`}).join("");
+  return `<section class="card pad shist"><div class="ctitle"><h2>Sales history</h2><span>${list.length} sale${list.length===1?"":"s"}</span></div><div class="list">${rows}</div>
+    ${list.length>salesShow?`<button class="btn sm" type="button" data-smore style="margin-top:10px">Show more</button>`:""}</section>`;
+}
+function salesDash(){
+  const A=salesTotals(), td=today();
+  const wk=new Date(td+"T00:00:00");wk.setDate(wk.getDate()-6);const wkS=new Date(wk.getTime()-wk.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  const T=salesTotals(td), W=salesTotals(wkS), S=stockTotals();
+  if(!jumia.size) return "";
+  // last 14 days bars
+  const days=[];for(let i=13;i>=0;i--){const d=new Date(td+"T00:00:00");d.setDate(d.getDate()-i);days.push(new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10))}
+  const byDay=Object.fromEntries(days.map(d=>[d,0]));for(const [,x] of sales) if(x.date in byDay) byDay[x.date]+=saleCalc(x).rev;
+  const mx=Math.max(1,...Object.values(byDay));
+  const bars=days.map((d,i)=>`<div class="bar" data-tip="${fmtDate(d)}: ${ksh(byDay[d])}"><i style="height:${byDay[d]/mx*100}%;${byDay[d]?"":"background:var(--line)"}"></i><span>${i%2===1?"":fmtDate(d).split(" ")[0]}</span></div>`).join("");
+  const by={};for(const [,x] of sales){const c=saleCalc(x);const k=x.pid;by[k]=by[k]||{q:0,rev:0,prof:0,name:x.name};by[k].q+=c.q;by[k].rev+=c.rev;by[k].prof+=c.prof}
+  const top=Object.entries(by).sort((a,b)=>b[1].rev-a[1].rev).slice(0,5);
+  const topList=top.length?top.map(([pid,v])=>{const p=jumia.get(pid)||{};return `<div class="lrow" style="cursor:default">${p.imageId?`<img class="thumb" src="/_blob/${esc(p.imageId)}" alt="">`:`<div class="thumb no"></div>`}<div style="min-width:0"><div class="nm">${esc(p.name||v.name)}</div><div class="meta">${v.q} sold · ${leftOf(pid)} left</div></div><div class="saleamt num"><b>${ksh(v.rev)}</b><span class="${v.prof<0?"neg":"pos"}" style="font-size:.8rem">${ksh(v.prof)} profit</span></div></div>`}).join("")
+    :`<p class="hint" style="margin:0">Your best sellers show here once you record sales in Jumia.</p>`;
+  return `<section class="card pad"><div class="ctitle"><h2>Jumia sales</h2><button class="btn sm sellbtn" type="button" data-sell="">Record a sale</button></div>
+    <div class="dsales num">
+      <div class="card"><span class="lab">Total sold</span><b>${ksh(A.rev)}</b><span class="s">${A.q} pieces · ${A.count} sales</span></div>
+      <div class="card"><span class="lab">Actual profit</span><b class="${A.prof<0?"neg":"pos"}">${ksh(A.prof)}</b><span class="s">after cost & ${ksh(A.commK)} commission</span></div>
+      <div class="card"><span class="lab">Today</span><b>${ksh(T.rev)}</b><span class="s">${T.q} pcs · ${ksh(T.prof)} profit</span></div>
+      <div class="card"><span class="lab">Last 7 days</span><b>${ksh(W.rev)}</b><span class="s">${W.q} pcs · ${ksh(W.prof)} profit</span></div>
+    </div></section>
+  <section class="two">
+    <div class="card pad"><div class="ctitle"><h2>Sales, last 14 days</h2><span>KSh per day</span></div><div class="spark" role="img" aria-label="Sales per day for the last 14 days">${bars}</div>
+      <p class="hint" style="margin:10px 0 0">${S.left} pieces still in stock, worth ${ksh(S.leftVal)} at cost.</p></div>
+    <div class="card pad"><div class="ctitle"><h2>Best sellers</h2><button class="btn ghost sm" type="button" data-tab="jumia">Open Jumia →</button></div><div class="list">${topList}</div></div>
+  </section>`;
+}
+function openSale(pid){
+  const p=pid?jumia.get(pid):null;
+  sale={pid:pid||"",qty:1,price:p?p.sell??"":"",comm:p?(p.comm??18):18,fee:p?(p.fee??120):120,date:today(),note:""};
+  renderSale(true);
+}
+function saleOrig(){return sale&&sale.editId?sales.get(sale.editId):null}
+function availFor(pid){const o=saleOrig();return leftOf(pid)+(o&&o.pid===pid?n(o.qty):0)}
+function saleBuy(){const o=saleOrig(),p=sale&&sale.pid?jumia.get(sale.pid):null;return o&&o.pid===sale.pid&&!blank(o.buy)?n(o.buy):n(p?.buy)}
+function editSale(id){const x=sales.get(id);if(!x)return;
+  sale={editId:id,pid:x.pid||"",qty:x.qty??1,price:x.price??"",comm:x.comm??18,fee:x.fee??120,date:x.date||today(),note:x.note||""};
+  renderSale(true);}
+function renderSale(full){
+  const root=$("#saleRoot"); if(!sale){root.innerHTML="";return}
+  const p=sale.pid?jumia.get(sale.pid):null, left=p?availFor(sale.pid):0, isEdit=!!sale.editId;
+  const c=saleCalc({...sale,buy:saleBuy()});
+  const opts=[...jumia.entries()].sort((a,b)=>n(a[1].num)-n(b[1].num)).map(([id,x])=>`<option value="${esc(id)}" ${id===sale.pid?"selected":""} ${availFor(id)>0||id===sale.pid?"":"disabled"}>${esc(x.name)} (${Math.max(0,availFor(id))} left)</option>`).join("");
+  const receipt=`<div><span>${c.q} × ${ksh(c.pr)}</span><b>${ksh(c.rev)}</b></div><div><span>Jumia commission ${c.c}% + transport ${ksh(c.f)} × ${c.q}</span><span>− ${ksh(c.commK)}</span></div><div><span>Buying cost (${c.q} × ${ksh(saleBuy())})</span><span>− ${ksh(c.cost)}</span></div><div class="tot"><span>Profit</span><span class="${c.prof<0?"neg":"pos"}">${ksh(c.prof)}</span></div>`;
+  if(!full&&root.querySelector(".mbox")){ $("#sRec").innerHTML=receipt; $("#sLeft").textContent=p?`${left} in stock`:""; $("#sErr").textContent=saleErr(); return }
+  root.innerHTML=`<div class="modal" data-sclose><div class="mbox" role="dialog" aria-modal="true" aria-labelledby="sTitle">
+    <div class="mhead"><h2 id="sTitle">${isEdit?"Edit sale":"Record a sale"}</h2><button class="btn ghost sm" type="button" data-sclose>Close</button></div>
+    ${p?`<div class="mprod">${p.imageId?`<img src="/_blob/${esc(p.imageId)}" alt="">`:`<div class="no"></div>`}<div style="min-width:0"><div class="nm" style="white-space:normal">${esc(p.name)}</div><div class="meta" id="sLeft">${left} in stock</div></div></div>`:""}
+    <div class="field"><label for="sProd">Product</label><select id="sProd">${p?"":`<option value="">Choose a product…</option>`}${opts}</select></div>
+    <div class="mgrid">
+      <div class="field"><label for="sQty">Pieces sold</label><div class="qtyrow"><button type="button" data-sq="-1" aria-label="One less">−</button><input id="sQty" type="number" min="1" step="1" inputmode="numeric" value="${esc(sale.qty)}"><button type="button" data-sq="1" aria-label="One more">+</button></div></div>
+      <div class="field"><label for="sPrice">Price per piece (KSh)</label><input id="sPrice" type="number" step="any" inputmode="decimal" value="${esc(sale.price)}"></div>
+      <div class="field"><label for="sComm">Jumia commission (%)</label><input id="sComm" type="number" step="any" inputmode="decimal" value="${esc(sale.comm)}"></div>
+      <div class="field"><label for="sFee">Jumia transport per item (KSh)</label><input id="sFee" type="number" step="any" inputmode="decimal" value="${esc(sale.fee)}"></div>
+      <div class="field"><label for="sDate">Date sold</label><input id="sDate" type="date" value="${esc(sale.date)}"></div>
+      <div class="field" style="grid-column:1/-1"><label for="sNote">Note (optional)</label><input id="sNote" value="${esc(sale.note)}" placeholder="e.g. Jumia order number or colour"></div>
+    </div>
+    <div class="receipt num" id="sRec">${receipt}</div>
+    <div class="merr" id="sErr" role="alert">${saleErr()}</div>
+    <button class="btn sellbtn" type="button" id="sSave" style="padding:12px;font-size:1rem">${isEdit?"Save changes":"Record sale"}</button>
+  </div></div>`;
+}
+function saleErr(){
+  if(!sale) return ""; if(!sale.pid) return "";
+  const l=availFor(sale.pid); if(n(sale.qty)>l) return `Only ${Math.max(0,l)} left in stock. Increase "Stock in" if you received more.`;
+  return "";
+}
+async function saveSale(){
+  const p=jumia.get(sale.pid);
+  if(!p){$("#sErr").textContent="Choose the product you sold.";return}
+  const q=Math.round(n(sale.qty)); if(q<1){$("#sErr").textContent="Enter how many pieces you sold.";return}
+  if(q>availFor(sale.pid)){$("#sErr").textContent=saleErr();return}
+  if(blank(sale.price)){$("#sErr").textContent="Enter the price you sold at.";return}
+  const o=saleOrig(), id=o?sale.editId:db.collection("sales").doc().id;
+  const data={pid:sale.pid,name:p.name||"",qty:q,price:n(sale.price),comm:blank(sale.comm)?18:n(sale.comm),fee:blank(sale.fee)?120:n(sale.fee),buy:saleBuy(),date:sale.date||today(),note:sale.note||"",ts:o?(o.ts||Date.now()):Date.now()};
+  if(o) data.edited=Date.now();
+  sales.set(id,data); write("sales/"+id,r=>r.set(data));
+  const c=saleCalc(data); sale=null; renderSale(); renderPage(); toast(o?`Sale updated: ${ksh(c.rev)} · ${ksh(c.prof)} profit`:`Sale recorded: ${ksh(c.rev)} · ${ksh(c.prof)} profit`);
+}
+document.addEventListener("click",e=>{
+  const t=e.target;
+  const sb=t.closest("[data-sell]"); if(sb){ if(!db){toast("Open this page signed in to record sales.");return} openSale(sb.dataset.sell); setTimeout(()=>{const q=$("#sQty");q&&q.select()},40); return }
+  if(t.matches("[data-sclose]")||t.closest("button[data-sclose]")){sale=null;renderSale();return}
+  const sq=t.closest("[data-sq]"); if(sq&&sale){sale.qty=Math.max(1,Math.round(n(sale.qty))+Number(sq.dataset.sq));$("#sQty").value=sale.qty;renderSale(false);return}
+  if(t.closest("#sSave")){saveSale();return}
+  const se=t.closest("[data-sedit]"); if(se){ if(!db){toast("Open this page signed in to edit sales.");return} editSale(se.dataset.sedit); return }
+  const sd=t.closest("[data-sdel]"); if(sd){sConfirm=sd.dataset.sdel;renderPage();return}
+  if(t.closest("[data-sdelno]")){sConfirm=null;renderPage();return}
+  const sy=t.closest("[data-sdelyes]"); if(sy){const id=sy.dataset.sdelyes;sales.delete(id);sConfirm=null;renderPage();write("sales/"+id,r=>r.delete());toast("Sale undone. Stock is back.");return}
+  if(t.closest("[data-smore]")){salesShow+=20;renderPage();return}
+});
+document.addEventListener("input",e=>{
+  if(!sale) return; const t=e.target;
+  const map={sQty:"qty",sPrice:"price",sComm:"comm",sFee:"fee",sDate:"date",sNote:"note"};
+  if(map[t.id]){sale[map[t.id]]=t.type==="number"?(t.value===""?"":Number(t.value)):t.value;renderSale(false)}
+});
+document.addEventListener("change",e=>{
+  if(e.target.id==="sProd"&&sale){const p=jumia.get(e.target.value);sale.pid=e.target.value;if(p){sale.price=p.sell??"";sale.comm=p.comm??18;sale.fee=p.fee??120}renderSale(true)}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&sale){sale=null;renderSale()} if(e.key==="Enter"&&sale&&e.target.closest&&e.target.closest(".mbox")&&e.target.tagName==="INPUT"){e.preventDefault();saveSale()}});
+
+/* ---------- PIN lock ---------- */
+const PIN_HASH="8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92";
+let tries=0, waitUntil=0;
+/* auto-lock when nobody uses the app for a while */
+let idleMin=5; try{const v=+localStorage.getItem("zs_idle"); if([1,2,5,10,15,30].includes(v)) idleMin=v}catch{}
+let lastAct=Date.now(), lastSaved=0;
+function bump(force){ if(!force&&document.body.classList.contains("locked")) return; lastAct=Date.now(); if(force||lastAct-lastSaved>5000){lastSaved=lastAct; try{sessionStorage.setItem("zs_last",String(lastAct))}catch{}} }
+function idleCheck(){ if(document.body.classList.contains("locked")) return; let t=lastAct; try{t=Math.max(t,+sessionStorage.getItem("zs_last")||0)}catch{}; if(Date.now()-t>=idleMin*60000){lockApp();$("#lockErr").textContent=`Locked after ${idleMin} min of no activity.`}}
+["pointerdown","pointermove","keydown","wheel","touchstart","scroll"].forEach(ev=>document.addEventListener(ev,()=>bump(),{passive:true,capture:true}));
+async function sha(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+function isUnlocked(){try{return sessionStorage.getItem("zs_unlocked")===PIN_HASH}catch{return false}}
+function lockApp(){try{sessionStorage.removeItem("zs_unlocked")}catch{}; if(openId) closeDrawer(); document.body.classList.add("locked"); $("#lock").hidden=false; $("#pinIn").value=""; $("#lockErr").textContent=""; setTimeout(()=>$("#pinIn").focus(),50)}
+function unlockApp(){try{sessionStorage.setItem("zs_unlocked",PIN_HASH)}catch{}; document.body.classList.remove("locked"); $("#lock").hidden=true; tries=0; bump(true)}
+$("#lockForm").addEventListener("submit",async e=>{
+  e.preventDefault(); const box=$("#lockForm"), err=$("#lockErr"), v=$("#pinIn").value.trim();
+  if(Date.now()<waitUntil){err.textContent=`Too many tries. Wait ${Math.ceil((waitUntil-Date.now())/1000)} seconds.`;return}
+  if(await sha(v)===PIN_HASH){unlockApp();return}
+  tries++; if(tries>=5){waitUntil=Date.now()+30000;tries=0;err.textContent="Too many wrong tries. Wait 30 seconds."} else err.textContent="Wrong PIN. Try again.";
+  $("#pinIn").value=""; box.classList.remove("shake"); void box.offsetWidth; box.classList.add("shake"); $("#pinIn").focus();
+});
+$("#pinIn").addEventListener("input",e=>{const t=e.target; t.value=t.value.replace(/\D/g,"").slice(0,6); if(t.value.length===6) $("#lockForm").requestSubmit()});
+document.addEventListener("click",e=>{if(e.target.closest("[data-lock]")) lockApp()},true);
+if(!isUnlocked()) lockApp();
+else{ let pl=0; try{pl=+sessionStorage.getItem("zs_last")||0}catch{}; if(pl&&Date.now()-pl>=idleMin*60000){lockApp();$("#lockErr").textContent=`Locked after ${idleMin} min of no activity.`} else bump(true) }
+setInterval(idleCheck,10000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden) idleCheck()});
+window.addEventListener("focus",idleCheck);
+document.addEventListener("change",e=>{if(e.target&&e.target.id==="setIdle"){idleMin=+e.target.value;try{localStorage.setItem("zs_idle",String(idleMin))}catch{};bump(true);toast(`Auto-lock set to ${idleMin} minute${idleMin>1?"s":""}`)}});
+
+/* ---------- boot ---------- */
+renderNav();
+(async()=>{
+  try{ db=await window.claude?.use?.("db") }catch{ db=null }
+  if(!db){ $("#page").innerHTML=`<div class="empty">Your orders live in this page's saved data. Open it in Claude while signed in to see and edit them.</div>`; return }
+  try{ const u=await window.claude.use("user"); const w=u?await u.can("data.write"):null; if(w===false) canWrite=false }catch{}
+  try{ assets=await window.claude.use("assets") }catch{ assets=null }
+  db.doc("settings/main").onSnapshot(s=>{ if(s.exists){ settings={rate:130,commission:0.18,other:120,...s.data()}; if(loaded&&!(tab==="settings"&&$("#page").contains(document.activeElement))) renderPage(); if(openId) renderDrawer(false) } },()=>{});
+  db.collection("sales").onSnapshot(snap=>{
+    const m=new Map(); snap.docs.forEach(d=>m.set(d.id,JSON.parse(JSON.stringify(d.data())))); sales=m;
+    const typing=$("#page").contains(document.activeElement)&&document.activeElement.tagName==="INPUT";
+    if(loaded&&(tab==="jumia"||tab==="dashboard")&&!typing) renderPage();
+    if(sale) renderSale(false);
+  },()=>{});
+  db.collection("jumia").onSnapshot(snap=>{
+    const m=new Map(); snap.docs.forEach(d=>m.set(d.id,JSON.parse(JSON.stringify(d.data()))));
+    for(const k of Object.keys(timers)){ for(const [id,p] of jumia) if(k.startsWith("j"+id)&&m.has(id)) m.set(id,p) }
+    jumia=m; jLoaded=true;
+    const typing=$("#page").contains(document.activeElement)&&document.activeElement.tagName==="INPUT";
+    if(loaded&&tab!=="settings"&&!typing) renderPage();
+    if(sale) renderSale(false);
+  },()=>{});
+  db.collection("orders").onSnapshot(snap=>{
+    const m=new Map();
+    snap.docs.forEach(d=>m.set(d.id,JSON.parse(JSON.stringify(d.data()))));
+    for(const k of Object.keys(timers)){ for(const [id,o] of orders) if(k.startsWith(id)&&m.has(id)) m.set(id,o) }
+    if(openId&&orders.has(openId)&&!m.has(openId)) m.set(openId,orders.get(openId));
+    orders=m; loaded=true; renderNav();
+    const typing=$("#page").contains(document.activeElement)&&document.activeElement.tagName==="INPUT"&&document.activeElement.id!=="q";
+    if(!typing) renderPage();
+    if(openId) renderDrawer(false);
+  },()=>{ $("#page").innerHTML=`<div class="empty">Couldn't load your orders right now. Reload the page to try again.</div>` });
+})();
+</script>
+
+</body></html>
